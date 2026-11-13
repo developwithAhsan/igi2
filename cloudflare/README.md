@@ -24,7 +24,9 @@ No manual output-directory field is required. The root `wrangler.jsonc` explicit
 3. It installs .NET 10 and the `wasm-tools` workload.
 4. It applies the local game-folder picker overlay.
 5. It publishes the browser runtime to `publish/` and checks that `index.html`, `main.js`, and the .NET framework assets exist.
-6. The deploy command runs Wrangler. Wrangler reads `wrangler.jsonc` and deploys the files in `publish/` as Worker static assets.
+6. For Cloudflare only, managed-code AOT is disabled with `-p:RunAOTCompilation=false`. The native Emscripten/WebGPU runtime remains enabled, while managed assemblies stay as separate small files instead of being linked into the 35.3 MiB `dotnet.native.*.wasm` file. This avoids the Workers Static Assets 25 MiB per-file limit; managed code runs under the .NET WebAssembly interpreter, so CPU-bound game work may be slower than an AOT deployment.
+7. The build script checks every output file against the 25 MiB limit before allowing Wrangler to run.
+8. The deploy command runs Wrangler. Wrangler reads `wrangler.jsonc` and deploys the files in `publish/` as Worker static assets.
 
 This is the fix for the previous error, **“Could not detect a directory containing static files”**: the Worker now has an explicit static-assets directory, and its build command creates that directory before Wrangler deploys.
 
