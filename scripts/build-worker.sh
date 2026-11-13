@@ -47,28 +47,44 @@ echo "==> Installing the WebAssembly build workload"
 echo "==> Applying the local game-folder picker overlay"
 node "$ROOT/scripts/patch-web.mjs"
 
-echo "==> Publishing the browser runtime to ./publish"
-rm -rf "$ROOT/publish"
-mkdir -p "$ROOT/publish"
+echo "==> Publishing the browser runtime to a staging directory"
+PUBLISH_STAGE="$ROOT/.cloudflare-publish-stage"
+rm -rf "$ROOT/publish" "$PUBLISH_STAGE"
+mkdir -p "$PUBLISH_STAGE" "$ROOT/publish"
 (
   cd "$ENGINE_DIR"
   dotnet publish apps/OpenIGI.Web/OpenIGI.Web.csproj \
     --configuration Release \
-    --output "$ROOT/publish" \
+    --output "$PUBLISH_STAGE" \
     --nologo
 )
 
+echo "==> Flattening the actual browser web root into ./publish"
+# Microsoft.NET.Sdk.WebAssembly publishes the website under wwwroot/. Cloudflare's
+# assets.directory must point to the directory whose direct child is index.html.
+if [[ -s "$PUBLISH_STAGE/wwwroot/index.html" ]]; then
+  WEB_ROOT="$PUBLISH_STAGE/wwwroot"
+elif [[ -s "$PUBLISH_STAGE/index.html" ]]; then
+  # Defensive fallback for a future SDK that emits the web root directly.
+  WEB_ROOT="$PUBLISH_STAGE"
+else
+  echo "Publish did not contain index.html in either wwwroot/ or its root." >&2
+  find "$PUBLISH_STAGE" -maxdepth 3 -type f | head -80 >&2 || true
+  exit 1
+fi
+cp -a "$WEB_ROOT/." "$ROOT/publish/"
+
 echo "==> Verifying the static asset output"
 test -s "$ROOT/publish/index.html" || {
-  echo "Build did not produce publish/index.html." >&2
+  echo "Flattening failed: publish/index.html is missing." >&2
   exit 1
 }
 test -s "$ROOT/publish/main.js" || {
-  echo "Build did not produce publish/main.js." >&2
+  echo "Flattening failed: publish/main.js is missing." >&2
   exit 1
 }
 test -d "$ROOT/publish/_framework" || {
-  echo "Build did not produce the .NET WebAssembly framework directory." >&2
+  echo "Flattening failed: publish/_framework is missing." >&2
   exit 1
 }
 
