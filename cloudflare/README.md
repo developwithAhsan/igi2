@@ -1,44 +1,51 @@
-# Deploy IGI2 to Cloudflare Pages
+# Deploy IGI2 on Cloudflare Workers
 
-This repository is prepared for **Cloudflare Pages Git integration**. You create the Cloudflare project yourself; no Cloudflare token or account credentials are stored in this repository.
+This repository is configured for **Cloudflare Workers Builds + Workers Static Assets**. It is not a Cloudflare Pages project. The Worker name is `igi2`, and Wrangler reads the built website from `./publish` using `wrangler.jsonc`.
 
-## Cloudflare Pages dashboard settings
+## Cloudflare Workers Builds settings
 
-Open https://dash.cloudflare.com/ and go to **Workers & Pages → Create application → Pages → Connect to Git**. Select GitHub repository `developwithAhsan/igi2`.
+The GitHub repository is `developwithAhsan/igi2`, production branch `main`, root directory `/`.
 
-Use these exact settings:
+Set these values under **Workers & Pages → igi2 → Settings → Builds**:
 
 | Setting | Value |
 | --- | --- |
-| Project name | `igi2-web` (or another available name) |
 | Production branch | `main` |
-| Framework preset | `None` |
-| Root directory | `/` (repository root) |
-| Build command | `bash scripts/cloudflare-pages-build.sh` |
-| Build output directory | `publish` |
+| Root directory | `/` |
+| Build command | `npm run build:worker` |
+| Deploy command | `npm run deploy` |
 
-No environment variables are required. The build script clones the pinned OpenIGI source revision, installs the .NET 10 SDK and WebAssembly workload, applies the local-folder picker overlay, and publishes the actual upstream browser app to `publish/`.
+No manual output-directory field is required. The root `wrangler.jsonc` explicitly declares `assets.directory = "./publish"`; Wrangler uploads that directory as the Worker's static assets.
 
-## First deployment
+## What the build does
 
-1. Connect the repository using the settings above and select **Save and Deploy**.
-2. Wait for the build to finish. The first build may take several minutes because it installs the .NET SDK and WebAssembly workload and compiles the engine.
-3. Open the generated `*.pages.dev` URL and test the page over HTTPS.
-4. In Cloudflare Pages, open **Settings → Builds & deployments** to confirm the production branch is `main`.
+1. Cloudflare installs the pinned Wrangler dependency from `package.json`.
+2. `scripts/build-worker.sh` ensures the OpenIGI source at pinned commit `719938d4413a9f7ffd408519c066091edcedf906` is available. If the Git submodule was not initialized by the Git provider, the script clones the upstream repository and checks out that exact commit.
+3. It installs .NET 10 and the `wasm-tools` workload.
+4. It applies the local game-folder picker overlay.
+5. It publishes the browser runtime to `publish/` and checks that `index.html`, `main.js`, and the .NET framework assets exist.
+6. The deploy command runs Wrangler. Wrangler reads `wrangler.jsonc` and deploys the files in `publish/` as Worker static assets.
 
-## Later updates
+This is the fix for the previous error, **“Could not detect a directory containing static files”**: the Worker now has an explicit static-assets directory, and its build command creates that directory before Wrangler deploys.
 
-Every push to `main` triggers a new production build. Pull requests and other branches can be used for preview deployments.
+## First deployment or retry
 
-## Important runtime requirements
+1. Open the `igi2` Worker in the Cloudflare dashboard.
+2. Confirm the Builds settings match the table above.
+3. Go to **Deployments** and select the latest build on `main`. A push to `main` also starts a new production build automatically.
+4. Open the production `workers.dev` URL after the deployment reports success.
 
-- The upstream browser runtime requires a modern browser with WebGPU and a secure HTTPS origin. Devices/browsers without WebGPU cannot start the game.
+## Build validation
+
+GitHub Actions runs the same build script and then runs `wrangler deploy --dry-run` to validate the static-assets configuration without publishing. Check the [GitHub Actions runs](https://github.com/developwithAhsan/igi2/actions) if a build fails.
+
+## Runtime and game-data limitations
+
+- The upstream browser runtime requires HTTPS and a browser/device with WebGPU.
 - Upstream currently documents browser support for the first six Project I.G.I. missions. I.G.I. 2 browser support is not yet available.
-- The upstream automatic game-data endpoint is used by the browser app. Only use game data you are authorized to access/distribute. The repository does not include proprietary game assets.
-- The folder picker reads selected files locally in the visitor's browser; it does not upload the game folder to this repository.
+- The upstream hosted-data URL is used by the engine. Only use game data you are authorized to access or distribute. This repository does not include proprietary game assets.
+- The local folder picker reads the selected game files in the visitor's browser; it does not upload them to this GitHub repository.
 
-## Build troubleshooting
+## Troubleshooting
 
-Open **Workers & Pages → your project → Deployments → failed deployment → Build log**.
-
-If the build fails, copy the first actual error (not just the final exit-code line). The most likely failure points are the .NET SDK/workload install or an upstream engine change that no longer matches the pinned UI overlay.
+For Cloudflare failures, open **Workers & Pages → igi2 → Builds → failed build → Logs**. The build log should show the separate build and deploy commands. If the .NET step fails, copy the first .NET error and the final 30 log lines.
