@@ -28,6 +28,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Install WebAssembly build tools
+        run: dotnet workload install wasm-tools
+
       - name: Apply website upload control
         run: node scripts/patch-web.mjs
 
