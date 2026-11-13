@@ -17,11 +17,11 @@ A current browser with WebGPU and a secure HTTPS origin is required. WebGPU avai
 
 ## Build and Cloudflare deployment
 
-For Cloudflare Pages Git integration, use the dashboard settings in [cloudflare/README.md](cloudflare/README.md). The build command is `bash scripts/cloudflare-pages-build.sh` and the output directory is `publish`.
+For Cloudflare, this repository uses **Workers Builds + Workers Static Assets** (not Pages). Follow [cloudflare/README.md](cloudflare/README.md). Workers Builds runs `npm run build:worker`, then `npm run deploy`. The `wrangler.jsonc` file explicitly maps the generated `publish/` directory to Worker static assets.
 
-For local builds, clone with the engine submodule, install the .NET 10 SDK and `wasm-tools` workload, run `node scripts/patch-web.mjs`, then publish `engine/OpenIGI/apps/OpenIGI.Web/OpenIGI.Web.csproj` to `publish/`.
+For a local build, run `npm install` and `npm run build:worker`. To validate the Worker asset configuration without publishing, run `npx wrangler deploy --dry-run`.
 
-The GitHub Actions workflow separately checks the upstream browser build and uploads its output as an Actions artifact.
+The GitHub Actions workflow runs the same build script and Wrangler dry-run validation.
 
 ## Engine updates
 
