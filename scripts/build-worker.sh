@@ -53,13 +53,13 @@ rm -rf "$ROOT/publish" "$PUBLISH_STAGE"
 mkdir -p "$PUBLISH_STAGE" "$ROOT/publish"
 (
   cd "$ENGINE_DIR"
+  # Workers Static Assets reject any individual file larger than 25 MiB.
+  # Keep the Emscripten/WebGPU runtime native, but interpret managed .NET IL
+  # so it is emitted as small individual assemblies instead of one 35+ MiB AOT wasm.
   dotnet publish apps/OpenIGI.Web/OpenIGI.Web.csproj \
     --configuration Release \
     --output "$PUBLISH_STAGE" \
     --nologo \
-    # Workers Static Assets reject any individual file larger than 25 MiB. \
-    # Keep the Emscripten/WebGPU runtime native, but interpret managed .NET IL \
-    # so it is emitted as small individual assemblies instead of one 35+ MiB AOT wasm. \
     -p:RunAOTCompilation=false
 )
 
