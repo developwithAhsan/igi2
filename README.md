@@ -15,18 +15,13 @@ The upstream README currently reports browser support for the first six Project 
 
 A current browser with WebGPU and a secure HTTPS origin is required. WebGPU availability depends on the browser, operating system and GPU. A browser without WebGPU cannot start the game.
 
-## Build
+## Build and Cloudflare deployment
 
-Clone with the engine submodule, then build using the .NET 10 SDK:
+For Cloudflare Pages Git integration, use the dashboard settings in [cloudflare/README.md](cloudflare/README.md). The build command is `bash scripts/cloudflare-pages-build.sh` and the output directory is `publish`.
 
-```sh
-git clone --recurse-submodules https://github.com/developwithAhsan/igi2.git
-cd igi2
-node scripts/patch-web.mjs
-dotnet publish engine/OpenIGI/apps/OpenIGI.Web/OpenIGI.Web.csproj -c Release -o publish
-```
+For local builds, clone with the engine submodule, install the .NET 10 SDK and `wasm-tools` workload, run `node scripts/patch-web.mjs`, then publish `engine/OpenIGI/apps/OpenIGI.Web/OpenIGI.Web.csproj` to `publish/`.
 
-The GitHub Actions workflow runs these steps and uploads the published site as an Actions artifact.
+The GitHub Actions workflow separately checks the upstream browser build and uploads its output as an Actions artifact.
 
 ## Engine updates
 
