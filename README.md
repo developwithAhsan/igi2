@@ -5,7 +5,7 @@ Browser website built on the OpenIGI engine.
 ## What is included
 
 - The complete OpenIGI source is pinned as a Git submodule at `engine/OpenIGI` (upstream commit `719938d4413a9f7ffd408519c066091edcedf906`).
-- The browser application uses the upstream `.NET 10` WebAssembly + WebGPU runtime, game host, renderer, audio, input, virtual file system and mission-loading code. This is the real engine integration, not a mock canvas.
+- The browser application uses the upstream `.NET 10` WebAssembly + WebGPU runtime, game host, renderer, audio, input, virtual file system and mission-loading code. This is the real engine integration, not a mock canvas. The Cloudflare build keeps the native WebGPU/Emscripten runtime but disables managed-code AOT so Cloudflare's 25 MiB per-file asset limit is not exceeded; managed .NET assemblies are interpreted instead of being merged into one oversized AOT WebAssembly file. This can reduce CPU-side game performance compared with a native-AOT host.
 - The landing page offers the upstream hosted-data auto-download path first, plus a separate local game-folder picker. The added **Upload / choose game folder** control reads the selected folder locally in the browser; it does not upload the files to this repository or a server.
 - Hosted game data is fetched from the upstream default endpoint `https://data.openigi.com/igi1/` and cached in the browser. It can be changed with the upstream `?data-host=<url>` option. Only use hosted data you are authorized to distribute.
 
@@ -21,7 +21,7 @@ For Cloudflare, this repository uses **Workers Builds + Workers Static Assets** 
 
 For a local build, run `npm install` and `npm run build:worker`. To validate the Worker asset configuration without publishing, run `npx wrangler deploy --dry-run`.
 
-The GitHub Actions workflow runs the same build script and Wrangler dry-run validation.
+The GitHub Actions workflow runs the same build script and Wrangler dry-run validation. The build script also rejects any generated file above Cloudflare's 25 MiB per-file limit before deployment.
 
 ## Engine updates
 
