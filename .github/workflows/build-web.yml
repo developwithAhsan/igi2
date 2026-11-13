@@ -1,0 +1,43 @@
+name: Build browser website
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out website and pinned engine
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Apply website upload control
+        run: node scripts/patch-web.mjs
+
+      - name: Publish OpenIGI browser runtime
+        run: dotnet publish engine/OpenIGI/apps/OpenIGI.Web/OpenIGI.Web.csproj --configuration Release --output publish
+
+      - name: Upload website build
+        uses: actions/upload-artifact@v4
+        with:
+          name: igi2-browser-website
+          path: publish/
+          if-no-files-found: error
+          retention-days: 14

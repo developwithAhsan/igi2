@@ -1,0 +1,3 @@
+[submodule "engine/OpenIGI"]
+	path = engine/OpenIGI
+	url = https://github.com/developwithAhsan/OpenIGI.git
