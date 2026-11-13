@@ -1,4 +1,4 @@
-name: Build browser website
+name: Validate Cloudflare Worker website
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: web-build-${{ github.ref }}
+  group: worker-website-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,24 +23,25 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install .NET 10
-        uses: actions/setup-dotnet@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          dotnet-version: 10.0.x
+          node-version: 22
+          cache: npm
 
-      - name: Install WebAssembly build tools
-        run: dotnet workload install wasm-tools
+      - name: Install the pinned Wrangler CLI
+        run: npm install --no-audit --no-fund
 
-      - name: Apply website upload control
-        run: node scripts/patch-web.mjs
+      - name: Build the .NET WebAssembly website
+        run: npm run build:worker
 
-      - name: Publish OpenIGI browser runtime
-        run: dotnet publish engine/OpenIGI/apps/OpenIGI.Web/OpenIGI.Web.csproj --configuration Release --output publish
+      - name: Validate the Cloudflare Worker static-assets deployment
+        run: npx wrangler deploy --dry-run
 
-      - name: Upload website build
+      - name: Upload website build for inspection
         uses: actions/upload-artifact@v4
         with:
-          name: igi2-browser-website
+          name: igi2-worker-website
           path: publish/
           if-no-files-found: error
           retention-days: 14
