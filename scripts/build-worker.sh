@@ -56,7 +56,11 @@ mkdir -p "$PUBLISH_STAGE" "$ROOT/publish"
   dotnet publish apps/OpenIGI.Web/OpenIGI.Web.csproj \
     --configuration Release \
     --output "$PUBLISH_STAGE" \
-    --nologo
+    --nologo \
+    # Workers Static Assets reject any individual file larger than 25 MiB. \
+    # Keep the Emscripten/WebGPU runtime native, but interpret managed .NET IL \
+    # so it is emitted as small individual assemblies instead of one 35+ MiB AOT wasm. \
+    -p:RunAOTCompilation=false
 )
 
 echo "==> Flattening the actual browser web root into ./publish"
@@ -94,5 +98,13 @@ if [[ "$FILE_COUNT" -lt 5 ]]; then
   exit 1
 fi
 
-echo "==> Worker assets ready: $FILE_COUNT files in $ROOT/publish"
+# Fail here with a clear message rather than letting Wrangler fail later.
+TOO_LARGE="$(find "$ROOT/publish" -type f -size +26214400c -print)"
+if [[ -n "$TOO_LARGE" ]]; then
+  echo "Cloudflare Workers Static Assets has a 25 MiB per-file limit; these files exceed it:" >&2
+  printf '%s\\n' "$TOO_LARGE" >&2
+  exit 1
+fi
+
+echo "==> Worker assets ready: $FILE_COUNT files in $ROOT/publish (all files <= 25 MiB)"
 du -sh "$ROOT/publish"
