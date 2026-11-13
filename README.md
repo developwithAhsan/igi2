@@ -1,32 +1,33 @@
-# IGI2 Web Edition
+# IGI 2 Online
 
-Browser website built on the OpenIGI engine.
+An IGI 2: Covert Strike-themed website shell deployed as a Cloudflare Worker.
 
-## What is included
+## Website
 
-- The complete OpenIGI source is pinned as a Git submodule at `engine/OpenIGI` (upstream commit `719938d4413a9f7ffd408519c066091edcedf906`).
-- The browser application uses the upstream `.NET 10` WebAssembly + WebGPU runtime, game host, renderer, audio, input, virtual file system and mission-loading code. This is the real engine integration, not a mock canvas. The Cloudflare build keeps the native WebGPU/Emscripten runtime but disables managed-code AOT so Cloudflare's 25 MiB per-file asset limit is not exceeded; managed .NET assemblies are interpreted instead of being merged into one oversized AOT WebAssembly file. This can reduce CPU-side game performance compared with a native-AOT host.
-- The landing page offers the upstream hosted-data auto-download path first, plus a separate local game-folder picker. The added **Upload / choose game folder** control reads the selected folder locally in the browser; it does not upload the files to this repository or a server.
-- Hosted game data is fetched from the upstream default endpoint `https://data.openigi.com/igi1/` and cached in the browser. It can be changed with the upstream `?data-host=<url>` option. Only use hosted data you are authorized to distribute.
+- The landing page is branded **IGI 2 Online** with a tactical, military-inspired interface.
+- OpenIGI branding, Discord links, upstream Project I.G.I. 1 hosted-data flow, and the IGI 1 browser play button are removed from the visible website.
+- The central 16:9 mission display is a visual game frame only. It does not pretend to run IGI 2.
+- The local folder picker inspects filenames in the browser and does not upload the selected files.
 
-## Browser support status
+## Important engine limitation
 
-The upstream README currently reports browser support for the first six Project I.G.I. missions with original graphics. I.G.I. 2 missions can run in the upstream desktop engine, but I.G.I. 2 browser support is not currently available. The site must not advertise I.G.I. 2 as playable in-browser until upstream adds that capability.
+The pinned OpenIGI upstream revision documents browser support only for the first six missions of Project I.G.I. 1. I.G.I. 2 browser support is not available. The IGI 2 desktop engine is still in development and does not have a released desktop build. Therefore this repository intentionally does not launch the IGI 1 runtime, does not present an IGI 2 game-data auto-download button, and does not claim that selecting a folder runs the game.
 
-A current browser with WebGPU and a secure HTTPS origin is required. WebGPU availability depends on the browser, operating system and GPU. A browser without WebGPU cannot start the game.
+A real IGI 2 download-and-run workflow requires a released IGI 2-compatible desktop runtime and game data that the user is legally entitled to use. This site does not redistribute the original copyrighted game files. Do not add an unverified download URL or mirror.
 
 ## Build and Cloudflare deployment
 
-For Cloudflare, this repository uses **Workers Builds + Workers Static Assets** (not Pages). Follow [cloudflare/README.md](cloudflare/README.md). Workers Builds runs `npm run build:worker`, then `npm run deploy`. The `wrangler.jsonc` file explicitly maps the generated `publish/` directory to Worker static assets.
+This repository uses Cloudflare Workers Builds + Workers Static Assets (not Pages). Worker name: `igi2`.
 
-For a local build, run `npm install` and `npm run build:worker`. To validate the Worker asset configuration without publishing, run `npx wrangler deploy --dry-run`.
+- Production branch: `main`
+- Root directory: `/`
+- Build command: `npm run build:worker`
+- Deploy command: `npm run deploy`
 
-The GitHub Actions workflow runs the same build script and Wrangler dry-run validation. The build script also rejects any generated file above Cloudflare's 25 MiB per-file limit before deployment.
+The build script fetches the pinned OpenIGI source for its existing .NET WebAssembly build pipeline, then applies `scripts/patch-web.mjs` to replace the upstream landing page and JavaScript with the IGI 2 Online interface. The browser runtime artifacts are still built and validated, but the new landing page does not load or launch the unsupported IGI 1 browser runtime.
 
-## Engine updates
+For local validation run `npm install`, `npm run build:worker`, then `npx wrangler deploy --dry-run`.
 
-The engine is pinned to a known upstream commit for reproducible builds. Update the gitlink only after reviewing upstream changes and re-testing the browser build.
+## Legal
 
-## License and game data
-
-OpenIGI is licensed under GPL-3.0; see `engine/OpenIGI/LICENSE` and `engine/OpenIGI/THIRD-PARTY-NOTICES.md`. The engine repository does not include original Project I.G.I. game assets. Players should use game data they legally own. This repository does not include or redistribute proprietary game files.
+The OpenIGI engine is GPL-3.0; see `engine/OpenIGI/LICENSE` and `engine/OpenIGI/THIRD-PARTY-NOTICES.md`. The engine repository contains no original game assets. Players must use game data they legally own. This repository does not include or redistribute proprietary game files.
