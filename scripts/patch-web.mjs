@@ -80,10 +80,6 @@ js += [
   "});"
 ].join('\n') + '\n';
 
-await writeFile(indexPath, siteIndex);
-await writeFile(resolve(root, 'favicon.svg'), favicon);
-await writeFile(mainPath, js);
-console.log('Applied the IGI 2 Online homepage shell and framed browser-game interface.');
 
 js += [
   "// IGI 2 menu choices outside Play: explain unavailable actions instead of faking game behavior.",
@@ -136,3 +132,8 @@ js += [
   "});",
   "function menuRootHidden() { return $('game-prompt').hidden; }"
 ].join('\n') + '\n';
+
+await writeFile(indexPath, siteIndex);
+await writeFile(resolve(root, 'favicon.svg'), favicon);
+await writeFile(mainPath, js);
+console.log('Applied the IGI 2 Online homepage shell and framed browser-game interface.');
