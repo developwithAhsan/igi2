@@ -162,50 +162,19 @@ js += [
   "function menuRootHidden() { return $('game-prompt').hidden; }"
 ].join('\n') + '\n';
 
-// Select the sequel's actual runtime from the installation signature, rather than defaulting every browser session to IGI 1.
-gameFiles = gameFiles.replace(/const TOP_LEVEL_FILE = .*;/, "const TOP_LEVEL_FILE = /\\\\.(qvm|cfg|txt|ini|dat)$|^igi2?\\\\.exe$/i;");
-gameFiles = gameFiles.replace(
-  /async function locate\\(picked, candidates\\) \\{[\\s\\S]*?\\n\\}/,
-  [
-    "async function locate(picked, candidates) {",
-    "  for (const candidate of candidates) {",
-    "    const verdict = judge(await candidate.kinds());",
-    "    if (verdict) return { name: candidate.name, title: verdict };",
-    "  }",
-    "  throw new InstallationError(`No supported game installation in /${picked}. Choose the folder containing igi2.exe or config.qvm.`);",
-    "}"
-  ].join('\\n')
-);
-gameFiles = gameFiles.replace(
-  "  const found = await locate(handle.name, candidates);\\n  const root = found ? await handle.getDirectoryHandle(found) : handle;\\n\\n  return {\\n    name: found ? `${handle.name}/${found}` : handle.name,",
-  "  const found = await locate(handle.name, candidates);\\n  const root = found.name ? await handle.getDirectoryHandle(found.name) : handle;\\n\\n  return {\\n    name: found.name ? `${handle.name}/${found.name}` : handle.name,\\n    title: found.title,"
-);
-gameFiles = gameFiles.replace(
-  "  const found = await locate(picked, candidates);\\n  return found ? `${found}/` : '';",
-  "  const found = await locate(picked, candidates);\\n  return { prefix: found.name ? `${found.name}/` : '', title: found.title };"
-);
-gameFiles = gameFiles.replace(
-  "  const prefix = await locateInList(picked, all);\\n  const files = rebase(all, prefix);\\n  return {\\n    name: prefix ? `${picked}/${prefix.slice(0, -1)}` : picked,",
-  "  const location = await locateInList(picked, all);\\n  const files = rebase(all, location.prefix);\\n  return {\\n    name: location.prefix ? `${picked}/${location.prefix.slice(0, -1)}` : picked,\\n    title: location.title,"
-);
-gameFiles = gameFiles.replace(
-  "  const prefix = await locateInList(base, all);\\n  const files = rebase(all, prefix);\\n  const at = base + prefix.split('/').filter(Boolean).map(part => `${encodeURIComponent(part)}/`).join('');\\n  return {\\n    name: at,",
-  "  const location = await locateInList(base, all);\\n  const files = rebase(all, location.prefix);\\n  const at = base + location.prefix.split('/').filter(Boolean).map(part => `${encodeURIComponent(part)}/`).join('');\\n  return {\\n    name: at,\\n    title: location.title,"
-);
-if (!gameFiles.includes('title: found.title') || !gameFiles.includes('title: location.title')) throw new Error('Could not patch IGI 2 folder detection into game-files.js.');
-js = js.replace('  game.Boot(args);', "  const gameArgs = source.title ? [...args, '-title', source.title] : args;\\n  game.Boot(gameArgs);");
-const defaultRuntime = '        IGameTitleRuntime runtime = TitleCatalog.Default;';
-const selectedRuntime = [
-  '        IGameTitleRuntime runtime = TitleCatalog.Default;',
-  '        if (options.Title is { Length: > 0 } titleId)',
-  '        {',
-  '            if (!TitleCatalog.TryResolve(titleId, out IGameTitleRuntime? selectedRuntime))',
-  '            {',
-  '                throw new ArgumentException($"Unknown game title \'{titleId}\'. Known titles: {TitleCatalog.KnownTitleIds}");',
-  '            }',
-  '            runtime = selectedRuntime;',
-  '        }'
-].join('\\n');
+// Route a verified game folder to the matching title runtime, including I.G.I. 2.
+const replaceGameFiles = (before, after, label) => { if (!gameFiles.includes(before)) throw new Error("Could not patch " + label + " in game-files.js."); gameFiles = gameFiles.replace(before, after); };
+replaceGameFiles("const TOP_LEVEL_FILE = /\\.(qvm|cfg|txt|ini|dat)$|^igi\\.exe$/i;", "const TOP_LEVEL_FILE = /\\.(qvm|cfg|txt|ini|dat)$|^igi2?\\.exe$/i;", "the game executable signature");
+replaceGameFiles("async function locate(picked, candidates) {\n  let sequel = false;\n  for (const candidate of candidates) {\n    const verdict = judge(await candidate.kinds());\n    if (verdict === 'igi1') return candidate.name;\n    sequel ||= verdict === 'igi2';\n  }\n\n  throw new InstallationError(sequel\n    ? `/${picked} is I.G.I. 2: Covert Strike. Choose Project I.G.I.'s folder instead.`\n    : `No Project I.G.I. installation in /${picked}. Choose the folder with IGI.exe in it, usually pc.`);\n}", "async function locate(picked, candidates) {\n  for (const candidate of candidates) {\n    const verdict = judge(await candidate.kinds());\n    if (verdict) return { name: candidate.name, title: verdict };\n  }\n  throw new InstallationError(`No supported game installation in /${picked}. Choose the folder containing igi2.exe or config.qvm.`);\n}", "the game-folder detector");
+replaceGameFiles("  const found = await locate(handle.name, candidates);\n  const root = found ? await handle.getDirectoryHandle(found) : handle;\n\n  return {\n    name: found ? `${handle.name}/${found}` : handle.name,", "  const found = await locate(handle.name, candidates);\n  const root = found.name ? await handle.getDirectoryHandle(found.name) : handle;\n\n  return {\n    name: found.name ? `${handle.name}/${found.name}` : handle.name,\n    title: found.title,", "the directory picker title");
+replaceGameFiles("  const found = await locate(picked, candidates);\n  return found ? `${found}/` : '';", "  const found = await locate(picked, candidates);\n  return { prefix: found.name ? `${found.name}/` : '', title: found.title };", "the relative-path title detector");
+replaceGameFiles("  const prefix = await locateInList(picked, all);\n  const files = rebase(all, prefix);\n  return {\n    name: prefix ? `${picked}/${prefix.slice(0, -1)}` : picked,", "  const location = await locateInList(picked, all);\n  const files = rebase(all, location.prefix);\n  return {\n    name: location.prefix ? `${picked}/${location.prefix.slice(0, -1)}` : picked,\n    title: location.title,", "the file-input title detector");
+replaceGameFiles("  const prefix = await locateInList(base, all);\n  const files = rebase(all, prefix);\n  const at = base + prefix.split('/').filter(Boolean).map(part => `${encodeURIComponent(part)}/`).join('');\n  return {\n    name: at,", "  const location = await locateInList(base, all);\n  const files = rebase(all, location.prefix);\n  const at = base + location.prefix.split('/').filter(Boolean).map(part => `${encodeURIComponent(part)}/`).join('');\n  return {\n    name: at,\n    title: location.title,", "the URL title detector");
+if (!gameFiles.includes("^igi2?\\.exe$/i") || !gameFiles.includes('title: found.title') || !gameFiles.includes('title: location.title')) throw new Error('I.G.I. 2 game-folder wiring is incomplete.');
+js = js.replace("  game.Boot(args);", "  const gameArgs = source.title ? [...args, '-title', source.title] : args;\n  game.Boot(gameArgs);");
+if (!js.includes("game.Boot(gameArgs)")) throw new Error('Could not route the selected game title to the browser runtime.');
+const defaultRuntime = "        IGameTitleRuntime runtime = TitleCatalog.Default;";
+const selectedRuntime = "        IGameTitleRuntime runtime = TitleCatalog.Default;\n        if (options.Title is { Length: > 0 } titleId)\n        {\n            if (!TitleCatalog.TryResolve(titleId, out IGameTitleRuntime? selectedRuntime))\n            {\n                throw new ArgumentException($\"Unknown game title '{titleId}'. Known titles: {TitleCatalog.KnownTitleIds}\");\n            }\n            runtime = selectedRuntime;\n        }";
 if (!program.includes(defaultRuntime)) throw new Error('Could not find the browser runtime default selection in Program.cs.');
 program = program.replace(defaultRuntime, selectedRuntime);
 await writeFile(gameFilesPath, gameFiles);
