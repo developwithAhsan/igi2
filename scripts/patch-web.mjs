@@ -4,61 +4,81 @@ import { resolve } from 'node:path';
 const root = resolve('engine/OpenIGI/apps/OpenIGI.Web/wwwroot');
 const indexPath = resolve(root, 'index.html');
 const mainPath = resolve(root, 'main.js');
+const siteIndex = await readFile(resolve('site/index.html'), 'utf8');
+const favicon = await readFile(resolve('site/favicon.svg'), 'utf8');
 
-let html = await readFile(indexPath, 'utf8');
 let js = await readFile(mainPath, 'utf8');
 
-const buttonMarker = 'id="upload-game-folder"';
-if (!html.includes(buttonMarker)) {
-  const ownButton = '<button class="change" id="own" type="button" hidden>Play from my own game folder</button>';
-  if (!html.includes(ownButton)) throw new Error('Could not find the upstream own-folder button; review upstream page changes before applying this overlay.');
-  html = html.replace(
-    ownButton,
-    ownButton + '\n                <button class="change" id="upload-game-folder" type="button">Upload / choose game folder</button>\n                <input id="upload-game-input" type="file" webkitdirectory directory multiple hidden aria-label="Choose your Project I.G.I. game folder">'
-  );
-}
+// Keep the IGI 2 brand separate from the title supported by the browser runtime.
+// Hosted data can only be enabled explicitly by the site owner with a data-host URL.
+js = js.replace(
+  /const HOSTED_DATA = new URL\([\s\S]*?\);/,
+  "const HOSTED_DATA = query.get('data-host') ? new URL(query.get('data-host'), location.href).href.replace(/\\/?$/, '/') : null;"
+);
+js = js.replace(
+  'const hosted = await files.hostedStatus(HOSTED_DATA);',
+  'const hosted = HOSTED_DATA ? await files.hostedStatus(HOSTED_DATA) : null;'
+);
+js = js.replace(
+  "const HINT = 'The folder with IGI.exe in it, usually pc inside the installation.';",
+  "const HINT = 'Choose a supported game folder that you are legally entitled to use.';"
+);
 
-const declarations = "const change = $('change');";
-if (!js.includes("const uploadFolder = $('upload-game-folder');")) {
-  if (!js.includes(declarations)) throw new Error('Could not find the upstream landing-page element declarations.');
-  js = js.replace(
-    declarations,
-    declarations + "\nconst uploadFolder = $('upload-game-folder');\nconst uploadInput = $('upload-game-input');"
-  );
-}
+// Keep the full homepage visible while the browser game runs inside its framed display.
+js = js.replace(
+  'function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n}',
+  "function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n  $('game-frame').classList.remove('is-running');\n  $('game-prompt').hidden = false;\n}"
+);
+js = js.replace(
+  '  landing.hidden = true;\n  canvas.hidden = false;\n  canvas.focus();\n  game.Boot(args);',
+  "  landing.hidden = false;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  canvas.focus();\n  game.Boot(args);"
+);
 
-const listenerMarker = "    own.addEventListener('click', () => {";
-if (!js.includes("uploadFolder.addEventListener('click'")) {
-  if (!js.includes(listenerMarker)) throw new Error('Could not find the upstream folder-mode listener.');
-  const listener = `    uploadFolder.addEventListener('click', () => uploadInput.click(), { signal: listening.signal });
-    uploadInput.addEventListener('change', async () => {
-      try {
-        if (!uploadInput.files?.length) return;
-        const picked = await files.fromFileList(uploadInput.files);
-        ready = picked;
-        folderMode = true;
-        clear.hidden = true;
-        offer('Play game', \`Found the game in /\${picked.name}. Ready.\`, 'ok', true);
-      } catch (error) {
-        if (error instanceof files.InstallationError) {
-          offer('Choose game folder', error.message, 'error');
-        } else {
-          reject(error);
-        }
-      } finally {
-        uploadInput.value = '';
-      }
-    }, { signal: listening.signal });
+// Remove the upstream installer promotion and Discord/GitHub community widgets.
+js = js.replace(
+  /\n\/\/ The macOS and Linux install command,[\s\S]*?\n\/\/ --- The community[\s\S]*?\n\/\/ What the header says about the browser, as soon as it is known\./,
+  '\n// Player display controls. Settings remain informational until runtime settings are exposed.\n'
+);
 
-`;
-  js = js.replace(listenerMarker, listener + listenerMarker);
-}
+// The player chooses fullscreen explicitly; do not force the whole page into fullscreen on touch devices.
+js = js.replace(
+  /function takeTheScreen\(\) \{[\s\S]*?\n\}/,
+  'function takeTheScreen() { /* Use the framed Fullscreen control when requested. */ }'
+);
 
-if (!html.includes('IGI 2 Online visual refresh')) {
-  if (!html.includes('</style>')) throw new Error('Could not find the landing page style block.');
-  html = html.replace('</style>', "\n/* IGI 2 Online visual refresh: presentation only; original runtime and controls stay intact. */\n:root {\n  --bg: #10130f;\n  --text: #f0f0e8;\n  --soft: #d4d5c8;\n  --note: #c9cbbd;\n  --muted: #a8ad99;\n  --dim: #8c927f;\n  --faint: #777e6c;\n  --ok: #b2bd76;\n  --error: #df806b;\n}\n#landing {\n  background:\n    radial-gradient(90% 80% at 0% 100%, rgba(16, 19, 15, .82) 0%, rgba(16, 19, 15, .48) 42%, transparent 76%),\n    linear-gradient(to bottom, rgba(12, 15, 11, .48), transparent 24%, transparent 78%, rgba(12, 15, 11, .68)),\n    url(\"landing/bg.webp\") center / cover no-repeat,\n    radial-gradient(120% 90% at 85% 10%, #343b2b 0%, #1a2016 48%, #10130f 82%);\n}\n.path, .link-card {\n  border-color: rgba(178, 189, 118, .22);\n  background: rgba(15, 19, 13, .70);\n  border-radius: 12px;\n}\n.path { box-shadow: 0 12px 34px rgba(0, 0, 0, .16); }\n.link-card:hover {\n  border-color: rgba(194, 205, 135, .48);\n  background: rgba(24, 29, 19, .82);\n}\n.play {\n  background: #b2bd76;\n  color: #15190f;\n  border-radius: 8px;\n}\n.play:hover { background: #c4ce8c; }\n.play:disabled {\n  background: rgba(178, 189, 118, .28);\n  color: rgba(15, 19, 13, .78);\n}\n.change:hover { color: #e3e9c5; }\n.badge { background: rgba(178, 189, 118, .12); }\nfooter { border-top-color: rgba(178, 189, 118, .18); }\n" + '\n</style>');
-}
+js += [
+  "const settingsButton = $('settings');",
+  "const settingsPanel = $('settings-panel');",
+  "const settingsClose = $('settings-close');",
+  "settingsButton.addEventListener('click', () => {",
+  "  const open = settingsPanel.hidden;",
+  "  settingsPanel.hidden = !open;",
+  "  settingsButton.setAttribute('aria-expanded', String(open));",
+  "});",
+  "settingsClose.addEventListener('click', () => {",
+  "  settingsPanel.hidden = true;",
+  "  settingsButton.setAttribute('aria-expanded', 'false');",
+  "});",
+  "document.addEventListener('keydown', event => {",
+  "  if (event.key === 'Escape' && !settingsPanel.hidden) {",
+  "    settingsPanel.hidden = true;",
+  "    settingsButton.setAttribute('aria-expanded', 'false');",
+  "  }",
+  "});",
+  "const fullscreenButton = $('fullscreen');",
+  "fullscreenButton.addEventListener('click', async () => {",
+  "  try {",
+  "    if (document.fullscreenElement) await document.exitFullscreen();",
+  "    else await $('player-shell').requestFullscreen({ navigationUI: 'hide' });",
+  "  } catch (error) { console.warn('Fullscreen is unavailable:', error); }",
+  "});",
+  "document.addEventListener('fullscreenchange', () => {",
+  "  const label = fullscreenButton.querySelector('span');",
+  "  if (label) label.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';",
+  "});"
+].join('\n') + '\n';
 
-await writeFile(indexPath, html);
+await writeFile(indexPath, siteIndex);
+await writeFile(resolve(root, 'favicon.svg'), favicon);
 await writeFile(mainPath, js);
-console.log('Added the explicit local game-folder upload/picker control.');
+console.log('Applied the IGI 2 Online homepage shell and framed browser-game interface.');
