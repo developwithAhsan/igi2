@@ -23,6 +23,15 @@ js = js.replace(
   "const HINT = 'The folder with IGI.exe in it, usually pc inside the installation.';",
   "const HINT = 'Select your supported game folder.';"
 );
+js = js.replace(
+  "  $('status').textContent = status;\\n  $('status').dataset.tone = tone;",
+  "  $('status').textContent = status;\\n  $('status').title = status;\\n  $('status').dataset.tone = tone;"
+);
+js = js.replace(
+  /if \(picked\) \{\\n          ready = picked;\\n          if \(picked.handle\) await files.rememberFolder\(picked.handle\);\\n          offer\('Play IGI2', `Found the game in \/\$\{picked.name\}\\. Ready\\.`, 'ok', true\);\\n        \}/,
+  "if (picked) {\\n          if (picked.handle) await files.rememberFolder(picked.handle);\\n          resolve(picked);\\n          return;\\n        }"
+);
+
 
 js = js.replace(/else offer\('Choose game folder', hosted === null \? .+ : HINT\);/, "else offer('Play Game', HINT);");
 js = js.split("'Play game'").join("'Play IGI2'");
