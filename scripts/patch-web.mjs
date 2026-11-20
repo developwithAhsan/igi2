@@ -25,6 +25,10 @@ js = js.replace(
 );
 
 js = js.replace(/else offer\('Choose game folder', hosted === null \? .+ : HINT\);/, "else offer('Play Game', HINT);");
+js = js.split("'Play game'").join("'Play IGI2'");
+js = js.split("'Play now'").join("'Play IGI2'");
+js = js.split("'Choose game folder'").join("'Play IGI2'");
+js = js.replace("else offer('Play Game', HINT);", "else offer('Play IGI2', HINT);");
 
 // Keep the full homepage visible while the browser game runs inside its framed display.
 js = js.replace(
