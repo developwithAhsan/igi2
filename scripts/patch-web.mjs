@@ -135,4 +135,4 @@ js += [
   "  }",
   "});",
   "function menuRootHidden() { return $('game-prompt').hidden; }"
-].join('\\n') + '\\n';
+].join('\n') + '\n';
