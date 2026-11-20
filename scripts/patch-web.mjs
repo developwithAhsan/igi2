@@ -24,7 +24,7 @@ js = js.replace(
   "const HINT = 'Choose a supported game folder that you are legally entitled to use.';"
 );
 
-js = js.replace(/else offer\\('Choose game folder', hosted === null \\? .+ : HINT\\);/, "else offer('Play Game', HINT);");
+js = js.replace(/else offer\('Choose game folder', hosted === null \? .+ : HINT\);/, "else offer('Play Game', HINT);");
 
 // Keep the full homepage visible while the browser game runs inside its framed display.
 js = js.replace(
