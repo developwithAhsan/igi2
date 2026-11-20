@@ -28,8 +28,20 @@ js = js.replace(
   "  $('status').textContent = status;\\n  $('status').title = status;\\n  $('status').dataset.tone = tone;"
 );
 js = js.replace(
-  /if \(picked\) \{\\n          ready = picked;\\n          if \(picked.handle\) await files.rememberFolder\(picked.handle\);\\n          offer\('Play IGI2', `Found the game in \/\$\{picked.name\}\\. Ready\\.`, 'ok', true\);\\n        \}/,
-  "if (picked) {\\n          if (picked.handle) await files.rememberFolder(picked.handle);\\n          resolve(picked);\\n          return;\\n        }"
+  [
+    "        if (picked) {",
+    "          ready = picked;",
+    "          if (picked.handle) await files.rememberFolder(picked.handle);",
+    "          offer('Play IGI2', `Found the game in /${picked.name}. Ready.`, 'ok', true);",
+    "        }"
+  ].join('\n'),
+  [
+    "        if (picked) {",
+    "          if (picked.handle) await files.rememberFolder(picked.handle);",
+    "          resolve(picked);",
+    "          return;",
+    "        }"
+  ].join('\n')
 );
 
 
