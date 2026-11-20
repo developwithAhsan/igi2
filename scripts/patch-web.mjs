@@ -21,7 +21,7 @@ js = js.replace(
 );
 js = js.replace(
   "const HINT = 'The folder with IGI.exe in it, usually pc inside the installation.';",
-  "const HINT = 'Choose a supported game folder that you are legally entitled to use.';"
+  "const HINT = 'Select your supported game folder.';"
 );
 
 js = js.replace(/else offer\('Choose game folder', hosted === null \? .+ : HINT\);/, "else offer('Play Game', HINT);");
