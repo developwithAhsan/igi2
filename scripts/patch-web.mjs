@@ -6,7 +6,37 @@ const indexPath = resolve(root, 'index.html');
 const mainPath = resolve(root, 'main.js');
 const gameFilesPath = resolve(root, 'game-files.js');
 const programPath = resolve('engine/OpenIGI/apps/OpenIGI.Web/Program.cs');
-const siteIndex = await readFile(resolve('site/index.html'), 'utf8');
+let siteIndex = await readFile(resolve('site/index.html'), 'utf8');
+const oldOuterGate = "if(!window.igi2EngineReady){say('Game engine is still preparing. Please select Play again in a moment.',2200);return;}";
+const newOuterGate = "if(!window.igi2EngineReady){say(window.igi2EngineError?'WebGPU check failed: '+window.igi2EngineError:'Checking WebGPU graphics… please try again in a moment.',3000);return;}";
+if (!siteIndex.includes(oldOuterGate)) throw new Error('The homepage WebGPU Play gate is missing.');
+siteIndex = siteIndex.replace(oldOuterGate, newOuterGate);
+const oldOuterProgress = "li.classList.add('loading');f.style.width='100%';p.textContent='OPENING';";
+const newOuterProgress = "li.classList.add('loading');f.style.width='0%';p.textContent='CHECKING';";
+if (!siteIndex.includes(oldOuterProgress)) throw new Error('The homepage fake 100% progress indicator is missing.');
+siteIndex = siteIndex.replace(oldOuterProgress, newOuterProgress);
+const outerReadyAnchor = "window.igi2EngineReady=false;";
+const outerReadyBridge = [
+  "window.igi2EngineReady=false;",
+  "window.igi2EngineError='';",
+  "window.addEventListener('igi2-download-progress',event=>{",
+  "  if(!busy)return;",
+  "  const detail=event.detail||{};",
+  "  const fill=document.getElementById('fill'),pc=document.getElementById('pc');",
+  "  if(!fill||!pc)return;",
+  "  if(detail.fraction===null){pc.textContent=detail.value||detail.label||'CONNECTING';return;}",
+  "  const percent=Math.max(0,Math.min(100,Math.round(detail.fraction*100)));",
+  "  fill.style.width=percent+'%';",
+  "  pc.textContent=detail.value||percent+'%';",
+  "});",
+  "window.addEventListener('igi2-download-failed',()=>{",
+  "  busy=false;items[0].classList.remove('loading');",
+  "  document.getElementById('fill').style.width='0';",
+  "  document.getElementById('pc').textContent='0%';",
+  "});"
+].join('\n');
+if (!siteIndex.includes(outerReadyAnchor)) throw new Error('The homepage readiness bridge is missing.');
+siteIndex = siteIndex.replace(outerReadyAnchor, outerReadyBridge);
 const favicon = await readFile(resolve('site/favicon.svg'), 'utf8');
 let gameFiles = await readFile(gameFilesPath, 'utf8');
 let program = await readFile(programPath, 'utf8');
@@ -56,6 +86,19 @@ js = js.split("'Play now'").join("'Play IGI2'");
 js = js.split("'Choose game folder'").join("'Play IGI2'");
 js = js.replace("else offer('Play Game', HINT);", "else offer('Play IGI2', HINT);");
 
+const progressOld = "function progress(label, fraction = null, value = '') {\n  $('action').hidden = true;\n  $('loading').hidden = false;\n  $('progress-label').textContent = label;\n  $('progress-value').textContent = value;\n  $('progress').classList.toggle('indeterminate', fraction === null);\n  $('progress').firstElementChild.style.width = fraction === null ? '' : `${Math.round(fraction * 100)}%`;\n}";
+const progressNew = "function progress(label, fraction = null, value = '') {\n  $('action').hidden = true;\n  $('loading').hidden = false;\n  $('progress-label').textContent = label;\n  $('progress-value').textContent = value;\n  $('progress').classList.toggle('indeterminate', fraction === null);\n  $('progress').firstElementChild.style.width = fraction === null ? '' : `${Math.round(fraction * 100)}%`;\n  window.dispatchEvent(new CustomEvent('igi2-download-progress', { detail: { label, fraction, value } }));\n}";
+if (!js.includes(progressOld)) throw new Error('The runtime progress function changed; refusing to apply an unverified progress patch.');
+js = js.replace(progressOld, progressNew);
+const startAnchor = "  const source = await chooseSource();\n\n  progress('Starting graphics');";
+const newStart = "  const source = await chooseSource();\n  if (source.hosted) {\n    progress('Checking game download', null, 'Checking the hosted game file list…');\n    const pendingDownload = await source.downloadStatus();\n    const downloadedByBundle = new Map();\n    const began = performance.now();\n    source.onDownload = (name, got, size) => {\n      downloadedByBundle.set(name, Math.min(got, size));\n      const received = [...downloadedByBundle.values()].reduce((sum, value) => sum + value, 0);\n      const total = pendingDownload.all || size;\n      const fraction = total > 0 ? Math.min(received / total, 1) : 1;\n      const rate = received / Math.max(0.001, (performance.now() - began) / 1000);\n      progress('Downloading game files', fraction, `${Math.round(fraction * 100)}% · ${megabytes(received)} of ${megabytes(total)} MB · ${(rate / 1048576).toFixed(1)} MB/s`);\n    };\n    progress('Downloading game files', pendingDownload.all > 0 ? 0 : 1, `${pendingDownload.all > 0 ? '0%' : '100%'} · ${megabytes(pendingDownload.all)} MB remaining`);\n    await source.prefetch();\n    source.onDownload = null;\n    progress('Game files downloaded', 1, `100% · ${megabytes(pendingDownload.total)} MB total`);\n  }\n\n  progress('Starting graphics');";
+if (!js.includes(startAnchor)) throw new Error('Could not move hosted download ahead of runtime initialization.');
+js = js.replace(startAnchor, newStart);
+// WebGPU is the only pre-Play gate; network and storage checks must not hold the readiness signal.
+const newChooseSource = "async function chooseSource() {\n  const { adapter, reason } = await adapterReady;\n  if (!adapter) {\n    play.disabled = true;\n    offer('Play Game', reason, 'error');\n    window.igi2EngineReady = false;\n    window.igi2EngineError = reason;\n    return new Promise(() => {});\n  }\n\n  window.igi2EngineError = '';\n  const own = $('own');\n  const clear = $('clear');\n  own.hidden = true;\n  clear.hidden = true;\n  change.hidden = true;\n  offer('Play Game', 'WebGPU ready. Press Play to download the game files.', 'ok');\n\n  return new Promise(settle => {\n    const listening = new AbortController();\n    let busy = false;\n    const beginDownload = async () => {\n      if (busy) return;\n      busy = true;\n      play.disabled = true;\n      progress('Connecting to game files', null, 'Checking the hosted game manifest…');\n      try {\n        const source = await files.fromHosted(HOSTED_DATA);\n        listening.abort();\n        settle(source);\n      } catch (error) {\n        busy = false;\n        play.disabled = false;\n        offer('Retry download', `Game download could not start: ${error.message}`, 'error');\n        window.dispatchEvent(new Event('igi2-download-failed'));\n      }\n    };\n    play.addEventListener('click', () => { takeTheScreen(); beginDownload(); }, { signal: listening.signal });\n    window.igi2EngineReady = true;\n    window.dispatchEvent(new Event('igi2-engine-ready'));\n  });\n}";
+const chooserPattern = /async function chooseSource\(\) \{[\s\S]*?\n\}\n\n\/\/ --- Starting/;
+if (!chooserPattern.test(js)) throw new Error('Could not locate the startup Play/WebGPU gate.');
+js = js.replace(chooserPattern, () => newChooseSource + '\n\n// --- Starting');
 // Keep the full homepage visible while the browser game runs inside its framed display.
 js = js.replace(
   'function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n}',
@@ -173,12 +216,24 @@ js += [
   "function menuRootHidden() { return $('game-prompt').hidden; }"
 ].join('\n') + '\n';
 
+const sourceListMarker = "    async list() { return index.files; },";
+const sourceListReplacement = "    async list() { return index.files; },\n    async downloadStatus() {\n      const cache = await dataCache();\n      let all = 0;\n      let total = 0;\n      for (const bundle of Object.values(index.bundles)) {\n        total += bundle.size;\n        if (!await cache?.match(new URL(bundle.url, base).href)) all += bundle.size;\n      }\n      return { all, total };\n    },";
+if (!gameFiles.includes(sourceListMarker)) throw new Error('Hosted source status hook is missing.');
+gameFiles = gameFiles.replace(sourceListMarker, sourceListReplacement);
 // Download the full hosted first-game data set before launching, with one accurate combined progress bar.
 const prefetchGuard = [
   "      const connection = navigator.connection;",
   "      if (connection?.saveData || /(^|-)(2g|3g)$/.test(connection?.effectiveType ?? '')) return;"
 ].join('\n');
 if (!gameFiles.includes(prefetchGuard)) throw new Error('Could not enable full hosted game download before launch.');
+const oldPrefetchNames = "const names = Object.keys(index.bundles).filter(name => name !== 'base').sort((a, b) => order(a) - order(b));";
+const newPrefetchNames = "const names = Object.keys(index.bundles).sort((a, b) => a === 'base' ? -1 : b === 'base' ? 1 : order(a) - order(b));";
+if (!gameFiles.includes(oldPrefetchNames)) throw new Error('The hosted bundle list no longer matches the expected engine source.');
+gameFiles = gameFiles.replace(oldPrefetchNames, newPrefetchNames);
+const oldPrefetchCatch = "          console.warn(`Downloading ahead stopped: ${error.message}`);\n          return;";
+const newPrefetchCatch = "          console.warn(`Downloading game files stopped: ${error.message}`);\n          throw error;";
+if (!gameFiles.includes(oldPrefetchCatch)) throw new Error('The hosted bundle error handler changed unexpectedly.');
+gameFiles = gameFiles.replace(oldPrefetchCatch, newPrefetchCatch);
 gameFiles = gameFiles.replace(prefetchGuard, "      // Play is an explicit request to download the complete hosted game before launch.\n");
 
 const oldDownloadBlock = [
@@ -198,27 +253,9 @@ const oldDownloadBlock = [
   "  if (source.hosted) source.onDownload = null;"
 ].join('\n');
 const newDownloadBlock = [
-  "  const pendingDownload = source.hosted ? await files.hostedStatus(HOSTED_DATA) : null;",
-  "  const downloadedByBundle = new Map();",
-  "  if (source.hosted) {",
-  "    const began = performance.now();",
-  "    source.onDownload = (name, got, size) => {",
-  "      downloadedByBundle.set(name, Math.min(got, size));",
-  "      const received = [...downloadedByBundle.values()].reduce((sum, value) => sum + value, 0);",
-  "      const total = pendingDownload?.all || size;",
-  "      const fraction = total > 0 ? Math.min(received / total, 1) : 1;",
-  "      const rate = received / Math.max(0.001, (performance.now() - began) / 1000);",
-  "      progress('Downloading all game files', fraction, `${Math.round(fraction * 100)}% · ${megabytes(received)} of ${megabytes(total)} MB · ${(rate / 1048576).toFixed(1)} MB/s`);",
-  "    };",
-  "  }",
   "  const read = await files.load(source, fs, GAME_ROOT, (done, total) =>",
-  "    progress(source.hosted ? 'Preparing game files' : 'Reading game files', source.hosted ? null : (total ? done / total : 0), `${megabytes(done)} of ${megabytes(total)} MB`));",
-  "  if (source.hosted && typeof source.prefetch === 'function') {",
-  "    await source.prefetch();",
-  "    progress('Game files ready', 1, `100% · ${megabytes(pendingDownload?.total ?? 0)} MB`);",
-  "  }",
-  "  console.log(`Read ${read.files} files; ${read.deferred} wait for their missions.`);",
-  "  if (source.hosted) source.onDownload = null;"
+  "    progress(source.hosted ? 'Preparing downloaded game files' : 'Reading game files', source.hosted ? null : (total ? done / total : 0), `${megabytes(done)} of ${megabytes(total)} MB`));",
+  "  console.log(`Read ${read.files} files; ${read.deferred} wait for their missions.`);"
 ].join('\n');
 if (!js.includes(oldDownloadBlock)) throw new Error('Could not find the browser download progress block to upgrade.');
 js = js.replace(oldDownloadBlock, newDownloadBlock);
@@ -245,9 +282,6 @@ await writeFile(gameFilesPath, gameFiles);
 await writeFile(programPath, program);
 await writeFile(indexPath, siteIndex);
 await writeFile(resolve(root, 'favicon.svg'), favicon);
-js = js.replace(
-  "    play.addEventListener('click', () => { takeTheScreen(); act(false); }, { signal: listening.signal });",
-  "    play.addEventListener('click', () => { takeTheScreen(); act(false); }, { signal: listening.signal });\n    window.igi2EngineReady = true;\n    window.dispatchEvent(new Event('igi2-engine-ready'));"
-);
+if (!js.includes("window.igi2EngineReady = true;")) throw new Error('WebGPU-ready Play signal is missing.');
 await writeFile(mainPath, js);
 console.log('Applied the IGI 2 Online homepage shell and framed browser-game interface.');
