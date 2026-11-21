@@ -173,6 +173,56 @@ js += [
   "function menuRootHidden() { return $('game-prompt').hidden; }"
 ].join('\n') + '\n';
 
+// Download the full hosted first-game data set before launching, with one accurate combined progress bar.
+const prefetchGuard = [
+  "      const connection = navigator.connection;",
+  "      if (connection?.saveData || /(^|-)(2g|3g)$/.test(connection?.effectiveType ?? '')) return;"
+].join('\\n');
+if (!gameFiles.includes(prefetchGuard)) throw new Error('Could not enable full hosted game download before launch.');
+gameFiles = gameFiles.replace(prefetchGuard, "      // Play is an explicit request to download the complete hosted game before launch.\\n");
+
+const oldDownloadBlock = [
+  "  if (source.hosted) {",
+  "    // The bundle read before the game starts comes in first, with how fast; a mission's comes in when the",
+  "    // mission is chosen, with the game's own wait for it on the screen.",
+  "    const began = performance.now();",
+  "    source.onDownload = (name, got, size) => {",
+  "      if (name !== 'base') return;",
+  "      const rate = got / Math.max(0.001, (performance.now() - began) / 1000);",
+  "      progress('Downloading game files', got / size, `${mb(got)} of ${mb(size)} MB · ${(rate / 1048576).toFixed(1)} MB/s`);",
+  "    };",
+  "  }",
+  "  const read = await files.load(source, fs, GAME_ROOT, (done, total) =>",
+  "    progress(source.hosted ? 'Unpacking game files' : 'Reading game files', total ? done / total : 0, `${mb(done)} of ${mb(total)} MB`));",
+  "  console.log(`Read ${read.files} files; ${read.deferred} wait for their missions.`);",
+  "  if (source.hosted) source.onDownload = null;"
+].join('\\n');
+const newDownloadBlock = [
+  "  const pendingDownload = source.hosted ? await files.hostedStatus(HOSTED_DATA) : null;",
+  "  const downloadedByBundle = new Map();",
+  "  if (source.hosted) {",
+  "    const began = performance.now();",
+  "    source.onDownload = (name, got, size) => {",
+  "      downloadedByBundle.set(name, Math.min(got, size));",
+  "      const received = [...downloadedByBundle.values()].reduce((sum, value) => sum + value, 0);",
+  "      const total = pendingDownload?.all || size;",
+  "      const fraction = total > 0 ? Math.min(received / total, 1) : 1;",
+  "      const rate = received / Math.max(0.001, (performance.now() - began) / 1000);",
+  "      progress('Downloading all game files', fraction, `${Math.round(fraction * 100)}% · ${mb(received)} of ${mb(total)} MB · ${(rate / 1048576).toFixed(1)} MB/s`);",
+  "    };",
+  "  }",
+  "  const read = await files.load(source, fs, GAME_ROOT, (done, total) =>",
+  "    progress(source.hosted ? 'Preparing game files' : 'Reading game files', total ? done / total : 0, `${mb(done)} of ${mb(total)} MB`));",
+  "  if (source.hosted && typeof source.prefetch === 'function') {",
+  "    await source.prefetch();",
+  "    progress('Game files ready', 1, `100% · ${mb(pendingDownload?.total ?? 0)} MB`);",
+  "  }",
+  "  console.log(`Read ${read.files} files; ${read.deferred} wait for their missions.`);",
+  "  if (source.hosted) source.onDownload = null;"
+].join('\\n');
+if (!js.includes(oldDownloadBlock)) throw new Error('Could not find the browser download progress block to upgrade.');
+js = js.replace(oldDownloadBlock, newDownloadBlock);
+
 // Route a verified game folder to the matching title runtime, including I.G.I. 2.
 const replaceGameFiles = (before, after, label) => { if (!gameFiles.includes(before)) throw new Error("Could not patch " + label + " in game-files.js."); gameFiles = gameFiles.replace(before, after); };
 replaceGameFiles("const TOP_LEVEL_FILE = /\\.(qvm|cfg|txt|ini|dat)$|^igi\\.exe$/i;", "const TOP_LEVEL_FILE = /\\.(qvm|cfg|txt|ini|dat)$|^igi2?\\.exe$/i;", "the game executable signature");
