@@ -1,4 +1,4 @@
-:root{--img:url(/assets/img/menu.svg);
+:root{--img:url(/assets/img/menu.jpg);
 --W:max(100vw,calc(100vh * 1328 / 1184));--H:calc(var(--W) * 1184 / 1328);--u:calc(var(--H) / 1184);
 --text:#a9c9f2;--hover:#ffffff;--border:#8db4e8;--sep:#7ea5da;--ver:#b8c9e3;--bg:#050d15;
 --crop:calc(max(0px,calc(168*var(--u) - 80px)) + 50px);--font:"Rajdhani","Arial Narrow","Liberation Sans Narrow",Arial,sans-serif}

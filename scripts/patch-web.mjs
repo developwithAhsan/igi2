@@ -58,11 +58,11 @@ js = js.replace("else offer('Play Game', HINT);", "else offer('Play IGI2', HINT)
 // Keep the full homepage visible while the browser game runs inside its framed display.
 js = js.replace(
   'function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n}',
-  "function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n  $('game-frame').classList.remove('is-running');\n  $('game-prompt').hidden = false;\n}"
+  "function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n  $('game-frame').classList.remove('is-running');\n  $('game-prompt').hidden = false;\n  $('engine-overlay').hidden = true;\n  window.dispatchEvent(new Event('igi2-game-returned'));\n}"
 );
 js = js.replace(
   '  landing.hidden = true;\n  canvas.hidden = false;\n  canvas.focus();\n  game.Boot(args);',
-  "  landing.hidden = false;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  canvas.focus();\n  game.Boot(args);"
+  "  landing.hidden = false;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  $('engine-overlay').hidden = false;\n  canvas.focus();\n  game.Boot(args);"
 );
 
 // Remove the upstream installer promotion and Discord/GitHub community widgets.
@@ -188,44 +188,15 @@ const selectedRuntime = "        IGameTitleRuntime runtime = TitleCatalog.Defaul
 if (!program.includes(defaultRuntime)) throw new Error('Could not find the browser runtime default selection in Program.cs.');
 program = program.replace(defaultRuntime, selectedRuntime);
 
-// The ZIP's audio is stored as cacheable files, not a multi-megabyte base64 string in the homepage.
-js += [
-  "const menuMusic = new Audio('/assets/audio/menu-background.m4a');",
-  "menuMusic.loop = true;",
-  "menuMusic.volume = 0.22;",
-  "menuMusic.preload = 'auto';",
-  "window.igi2MenuMusic = menuMusic;",
-  "const menuSounds = {",
-  "  hover: new Audio('/assets/audio/menu-hover.mp3'),",
-  "  select: new Audio('/assets/audio/menu-select.mp3'),",
-  "  back: new Audio('/assets/audio/menu-back.mp3')",
-  "};",
-  "for (const sound of Object.values(menuSounds)) { sound.preload = 'auto'; sound.volume = 0.7; }",
-  "const playMenuSound = name => {",
-  "  const sound = menuSounds[name];",
-  "  if (!sound) return;",
-  "  try { sound.currentTime = 0; sound.play().catch(() => {}); } catch {}",
-  "};",
-  "let menuAudioUnlocked = false;",
-  "const unlockMenuAudio = () => {",
-  "  if (menuAudioUnlocked) return;",
-  "  menuAudioUnlocked = true;",
-  "  menuMusic.play().catch(() => { menuAudioUnlocked = false; });",
-  "};",
-  "for (const eventName of ['pointerdown', 'keydown', 'touchstart']) {",
-  "  window.addEventListener(eventName, unlockMenuAudio, { once: true, capture: true, passive: true });",
-  "}",
-  "for (const item of document.querySelectorAll('#mm .igi2-menu-choice, #cr .igi2-menu-choice, #back')) {",
-  "  item.addEventListener('pointerenter', () => playMenuSound('hover'));",
-  "  item.addEventListener('focus', () => playMenuSound('hover'));",
-  "  item.addEventListener('click', () => playMenuSound(item.id === 'back' ? 'back' : 'select'));",
-  "}",
-  "menuMusic.addEventListener('error', () => console.warn('IGI 2 menu music could not be loaded from /assets/audio/menu-background.m4a'));"
-].join('\n') + '\n';
+
 
 await writeFile(gameFilesPath, gameFiles);
 await writeFile(programPath, program);
 await writeFile(indexPath, siteIndex);
 await writeFile(resolve(root, 'favicon.svg'), favicon);
+js = js.replace(
+  "    play.addEventListener('click', () => { takeTheScreen(); act(false); }, { signal: listening.signal });",
+  "    play.addEventListener('click', () => { takeTheScreen(); act(false); }, { signal: listening.signal });\n    window.igi2EngineReady = true;\n    window.dispatchEvent(new Event('igi2-engine-ready'));"
+);
 await writeFile(mainPath, js);
 console.log('Applied the IGI 2 Online homepage shell and framed browser-game interface.');

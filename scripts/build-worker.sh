@@ -83,6 +83,14 @@ cp -a "$WEB_ROOT/." "$ROOT/publish/"
 echo "==> Copying the IGI 2 website pages and static assets"
 cp -a "$ROOT/site/." "$ROOT/publish/"
 
+# Rebuild the exact original menu soundtrack from small, Git-tracked base64 chunks.
+AUDIO_PARTS="$ROOT/audio_chunks/menu-background"
+if [[ -d "$AUDIO_PARTS" ]]; then
+  mkdir -p "$ROOT/publish/assets/audio"
+  cat "$AUDIO_PARTS"/part-*.b64 | base64 --decode > "$ROOT/publish/assets/audio/menu-background.m4a"
+  test -s "$ROOT/publish/assets/audio/menu-background.m4a"
+fi
+
 echo "==> Verifying the static asset output"
 test -s "$ROOT/publish/index.html" || {
   echo "Flattening failed: publish/index.html is missing." >&2
