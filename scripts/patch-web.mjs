@@ -36,7 +36,35 @@ const outerReadyBridge = [
   "});"
 ].join('\n');
 if (!siteIndex.includes(outerReadyAnchor)) throw new Error('The homepage readiness bridge is missing.');
+
 siteIndex = siteIndex.replace(outerReadyAnchor, outerReadyBridge);
+const rotateMarkup = '<div class="igi2-rotate-hint" id="rotate-hint" hidden role="status"><span class="rotate-phone" aria-hidden="true">▱ ↻</span><span><strong>Rotate your phone</strong><small>Landscape mode mein phone ko ghumayein</small></span></div>';
+if (!siteIndex.includes('id="rotate-hint"')) siteIndex = siteIndex.replace('</section></div>\\n<script>', '</section>' + rotateMarkup + '</div>\\n<script>');
+const playerStyles = `
+#engine-overlay #player-shell{position:relative}
+#engine-overlay .frame-actions{position:absolute;right:18px;bottom:16px;z-index:20;width:auto;min-height:0;justify-content:flex-end;padding:0;background:transparent;gap:10px}
+#engine-overlay .tool-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:112px;min-height:42px;padding:9px 15px;border:1px solid rgba(130,190,225,.65);border-radius:8px;background:rgba(5,22,38,.82);color:#eaf6ff;font:600 13px/1.1 Rajdhani,Arial,sans-serif;box-shadow:0 5px 22px rgba(0,0,0,.35);backdrop-filter:blur(8px);cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+#engine-overlay .tool-btn:hover,#engine-overlay .tool-btn[aria-expanded=true]{background:rgba(24,74,108,.95);border-color:#9ddcff;transform:translateY(-1px)}
+#engine-overlay .tool-btn svg{width:19px;height:19px;flex:none}
+#engine-overlay .settings-panel{position:absolute;right:18px;bottom:70px;z-index:21;width:min(390px,calc(100% - 36px));max-height:min(52vh,440px);padding:15px;border:1px solid rgba(111,180,220,.55);border-radius:12px;background:rgba(4,17,30,.96);box-shadow:0 16px 48px rgba(0,0,0,.55);backdrop-filter:blur(14px);color:#e7f3fb}
+#engine-overlay .settings-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;color:#9fd7f4;font:700 13px/1.2 Rajdhani,Arial,sans-serif;letter-spacing:.12em}
+#engine-overlay .settings-close{border:1px solid rgba(130,190,225,.5);border-radius:6px;background:rgba(22,58,83,.8);color:#eaf6ff;padding:7px 10px;font:600 11px Rajdhani,Arial,sans-serif;cursor:pointer}
+#engine-overlay .settings-grid{display:grid;grid-template-columns:1fr;gap:9px}
+#engine-overlay .setting-chip{display:grid;gap:4px;padding:11px;border:1px solid rgba(116,164,194,.22);border-radius:8px;background:rgba(19,44,64,.58)}
+#engine-overlay .setting-chip strong{color:#e8f6ff;font:700 13px Rajdhani,Arial,sans-serif}
+#engine-overlay .setting-chip span{color:#a9bdca;font:400 12px/1.4 Arial,sans-serif}
+#engine-overlay .igi2-rotate-hint{position:absolute;left:50%;top:50%;z-index:30;display:flex;align-items:center;gap:13px;transform:translate(-50%,-50%);padding:14px 18px;border:1px solid rgba(130,190,225,.6);border-radius:12px;background:rgba(2,13,24,.94);color:#eef8ff;box-shadow:0 12px 40px rgba(0,0,0,.6);font-family:Rajdhani,Arial,sans-serif;text-align:left}
+#engine-overlay .igi2-rotate-hint[hidden]{display:none!important}
+#engine-overlay .rotate-phone{font-size:34px;color:#9edcff;animation:igi2RotatePhone 1.8s ease-in-out infinite}
+#engine-overlay .igi2-rotate-hint strong,#engine-overlay .igi2-rotate-hint small{display:block}
+#engine-overlay .igi2-rotate-hint strong{font-size:15px;letter-spacing:.08em;text-transform:uppercase}
+#engine-overlay .igi2-rotate-hint small{margin-top:3px;color:#b8cbd8;font:12px/1.35 Arial,sans-serif}
+@keyframes igi2RotatePhone{0%,100%{transform:rotate(0)}50%{transform:rotate(90deg)}}
+#player-shell:fullscreen .frame-actions{display:flex!important}
+#player-shell:fullscreen .settings-panel{display:block}
+@media(max-width:600px){#engine-overlay .frame-actions{right:10px;bottom:10px;gap:7px}#engine-overlay .tool-btn{min-width:0;min-height:39px;padding:8px 10px;font-size:12px}#engine-overlay .settings-panel{right:10px;bottom:58px;width:calc(100% - 20px)}#engine-overlay .igi2-rotate-hint{width:calc(100% - 34px);justify-content:center}}
+`;
+siteIndex = siteIndex.replace('</style><style id="igi2-engine-bridge">', playerStyles + '</style><style id="igi2-engine-bridge">');
 const favicon = await readFile(resolve('site/favicon.svg'), 'utf8');
 let gameFiles = await readFile(gameFilesPath, 'utf8');
 let program = await readFile(programPath, 'utf8');
@@ -99,14 +127,14 @@ const newChooseSource = "async function chooseSource() {\n  const { adapter, rea
 const chooserPattern = /async function chooseSource\(\) \{[\s\S]*?\n\}\n\n\/\/ --- Starting/;
 if (!chooserPattern.test(js)) throw new Error('Could not locate the startup Play/WebGPU gate.');
 js = js.replace(chooserPattern, () => newChooseSource + '\n\n// --- Starting');
-// Keep the full homepage visible while the browser game runs inside its framed display.
+// Run the browser game on its own clean player screen; hide the homepage menu behind it.
 js = js.replace(
   'function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n}',
   "function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n  $('game-frame').classList.remove('is-running');\n  $('game-prompt').hidden = false;\n  $('engine-overlay').hidden = true;\n  window.dispatchEvent(new Event('igi2-game-returned'));\n}"
 );
 js = js.replace(
   '  landing.hidden = true;\n  canvas.hidden = false;\n  canvas.focus();\n  game.Boot(args);',
-  "  landing.hidden = false;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  $('engine-overlay').hidden = false;\n  canvas.focus();\n  game.Boot(args);"
+  "  landing.hidden = true;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  $('engine-overlay').hidden = false;\n  canvas.focus();\n  game.Boot(args);"
 );
 
 // Remove the upstream installer promotion and Discord/GitHub community widgets.
@@ -143,14 +171,23 @@ js += [
   "const fullscreenButton = $('fullscreen');",
   "fullscreenButton.addEventListener('click', async () => {",
   "  try {",
-  "    if (document.fullscreenElement) await document.exitFullscreen();",
-  "    else await $('player-shell').requestFullscreen({ navigationUI: 'hide' });",
-  "  } catch (error) { console.warn('Fullscreen is unavailable:', error); }",
+  "    if (document.fullscreenElement) { await document.exitFullscreen(); return; }",
+  "    await $('player-shell').requestFullscreen({ navigationUI: 'hide' });",
+  "    if (matchMedia('(pointer: coarse)').matches) {",
+  "      try { await screen.orientation?.lock?.('landscape'); $('rotate-hint').hidden = true; }",
+  "      catch { $('rotate-hint').hidden = !matchMedia('(orientation: portrait)').matches; }",
+  "    }",
+  "  } catch (error) { console.warn('Fullscreen is unavailable:', error); $('rotate-hint').hidden = !matchMedia('(orientation: portrait)').matches; }",
   "});",
   "document.addEventListener('fullscreenchange', () => {",
   "  const label = fullscreenButton.querySelector('span');",
   "  if (label) label.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';",
-  "});"
+  "  const mobile = matchMedia('(pointer: coarse)').matches;",
+  "  const portrait = matchMedia('(orientation: portrait)').matches;",
+  "  if (!document.fullscreenElement || !mobile || !portrait) $('rotate-hint').hidden = true;",
+  "  else $('rotate-hint').hidden = false;",
+  "});",
+  "screen.orientation?.addEventListener?.('change', () => { if (screen.orientation.type.startsWith('landscape')) $('rotate-hint').hidden = true; });"
 ].join('\n') + '\n';
 
 

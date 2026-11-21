@@ -90,6 +90,8 @@ grep -Fq "igi2-download-progress" "$ROOT/publish/index.html" || {
   echo "The published homepage is missing the live game-download progress bridge." >&2
   exit 1
 }
+grep -Fq "igi2-rotate-hint" "$ROOT/publish/index.html" || { echo "The player orientation hint is missing." >&2; exit 1; }
+grep -Fq "Rotate your phone" "$ROOT/publish/index.html" || { echo "The player rotation guidance is missing." >&2; exit 1; }
 grep -Fq "Checking WebGPU graphics" "$ROOT/publish/index.html" || {
   echo "The published homepage is missing the WebGPU readiness gate." >&2
   exit 1
