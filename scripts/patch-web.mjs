@@ -177,9 +177,9 @@ js += [
 const prefetchGuard = [
   "      const connection = navigator.connection;",
   "      if (connection?.saveData || /(^|-)(2g|3g)$/.test(connection?.effectiveType ?? '')) return;"
-].join('\\n');
+].join('\n');
 if (!gameFiles.includes(prefetchGuard)) throw new Error('Could not enable full hosted game download before launch.');
-gameFiles = gameFiles.replace(prefetchGuard, "      // Play is an explicit request to download the complete hosted game before launch.\\n");
+gameFiles = gameFiles.replace(prefetchGuard, "      // Play is an explicit request to download the complete hosted game before launch.\n");
 
 const oldDownloadBlock = [
   "  if (source.hosted) {",
@@ -196,7 +196,7 @@ const oldDownloadBlock = [
   "    progress(source.hosted ? 'Unpacking game files' : 'Reading game files', total ? done / total : 0, `${mb(done)} of ${mb(total)} MB`));",
   "  console.log(`Read ${read.files} files; ${read.deferred} wait for their missions.`);",
   "  if (source.hosted) source.onDownload = null;"
-].join('\\n');
+].join('\n');
 const newDownloadBlock = [
   "  const pendingDownload = source.hosted ? await files.hostedStatus(HOSTED_DATA) : null;",
   "  const downloadedByBundle = new Map();",
@@ -219,7 +219,7 @@ const newDownloadBlock = [
   "  }",
   "  console.log(`Read ${read.files} files; ${read.deferred} wait for their missions.`);",
   "  if (source.hosted) source.onDownload = null;"
-].join('\\n');
+].join('\n');
 if (!js.includes(oldDownloadBlock)) throw new Error('Could not find the browser download progress block to upgrade.');
 js = js.replace(oldDownloadBlock, newDownloadBlock);
 
