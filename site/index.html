@@ -299,7 +299,344 @@ html{scroll-behavior:smooth}
 #engine-overlay .frame-actions{width:100%;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:7px 12px;background:#06121f}
 #engine-overlay .settings-panel{max-height:40vh;overflow:auto}
 #engine-overlay .game-prompt{overflow:auto}
-@media(max-width:600px){#engine-toolbar{height:38px;min-height:38px;padding:0 9px;font-size:10px}#engine-overlay .frame-actions{min-height:45px;padding:5px 8px}}</style></head><body>
+@media(max-width:600px){#engine-toolbar{height:38px;min-height:38px;padding:0 9px;font-size:10px}#engine-overlay .frame-actions{min-height:45px;padding:5px 8px}}</style>
+<style id="igi2-startup-loader-styles">
+:root{
+  --igi2-startup-bar-h:clamp(14px,1.5vw,20px);
+  --igi2-startup-logo:min(80vw,46vh);
+  --igi2-startup-scene-w:100vw;
+  --igi2-startup-bar-w:84vw;
+}
+@media(min-width:701px){
+  :root{
+    --igi2-startup-logo:clamp(240px,min(34vw,54vh),470px);
+    --igi2-startup-scene-w:min(96vw,calc(var(--igi2-startup-logo)*1.9));
+    --igi2-startup-bar-w:min(90vw,calc(var(--igi2-startup-logo)*1.7));
+  }
+}
+html.igi2-startup-lock,
+html.igi2-startup-lock body{
+  height:100%!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+  touch-action:none!important;
+}
+#igi2-startup-loader{
+  position:fixed;
+  inset:0;
+  z-index:2147483647;
+  width:100vw;
+  height:100vh;
+  height:100dvh;
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(14px,3vh,28px);
+  overflow:hidden;
+  background:#000;
+  color:#c4cedb;
+  font-family:"Rajdhani","Arial Narrow",Arial,sans-serif;
+  opacity:1;
+  visibility:visible;
+  isolation:isolate;
+  transition:opacity .6s ease,visibility 0s linear 0s;
+}
+#igi2-startup-loader.igi2-startup-done{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .6s ease,visibility 0s linear .6s;
+}
+.igi2-startup-scene{
+  position:relative;
+  width:var(--igi2-startup-scene-w);
+  height:calc(var(--igi2-startup-logo)*.95);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:none;
+}
+.igi2-startup-scene::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  background:
+    radial-gradient(ellipse at 50% 42%,rgba(120,160,220,.35) 0,transparent 55%),
+    radial-gradient(ellipse at center,#4a6a99 0,#29415e 45%,#0d1a30 72%,rgba(0,0,0,0) 100%);
+  filter:blur(14px);
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 55%,transparent 72%);
+  mask-image:radial-gradient(ellipse at center,#000 55%,transparent 72%);
+}
+.igi2-startup-scene::after{
+  content:"";
+  position:absolute;
+  inset:8% 6%;
+  border-radius:50%;
+  opacity:.12;
+  background:repeating-linear-gradient(0deg,#9cc2ff 0 1px,transparent 1px 4px);
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 40%,transparent 70%);
+  mask-image:radial-gradient(ellipse at center,#000 40%,transparent 70%);
+}
+.igi2-startup-scene img{
+  position:relative;
+  z-index:1;
+  display:block;
+  width:var(--igi2-startup-logo);
+  height:auto;
+  max-width:none;
+  object-fit:contain;
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.7));
+}
+.igi2-startup-progress{
+  width:var(--igi2-startup-bar-w);
+  flex:none;
+}
+.igi2-startup-track{
+  width:100%;
+  height:var(--igi2-startup-bar-h);
+  overflow:hidden;
+  border:0;
+  border-radius:0;
+  background:#3b0707;
+}
+#igi2-startup-fill{
+  display:block;
+  width:0%;
+  height:100%;
+  border-radius:0;
+  background:#e11414;
+  box-shadow:none;
+  transition:width .18s linear;
+}
+.igi2-startup-info{
+  margin-top:10px;
+  text-align:center;
+  color:#c4cedb;
+  opacity:.8;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:1.2px;
+  line-height:1.4;
+  text-transform:uppercase;
+}
+@media(prefers-reduced-motion:reduce){
+  #igi2-startup-loader,#igi2-startup-fill{transition:none!important}
+}
+</style>
+</head><body>
+
+<div id="igi2-startup-loader" role="status" aria-live="polite" aria-label="Loading IGI 2 Online">
+  <div class="igi2-startup-scene">
+    <img src="/assets/favicon.png" alt="I.G.I. 2 Covert Strike" width="64" height="64" decoding="async" fetchpriority="high">
+  </div>
+  <div class="igi2-startup-progress">
+    <div class="igi2-startup-track" role="progressbar" aria-label="Website loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <span id="igi2-startup-fill"></span>
+    </div>
+    <div class="igi2-startup-info" id="igi2-startup-info">Loading 0%</div>
+  </div>
+</div>
+<script id="igi2-startup-controller">
+(function(){
+  'use strict';
+  var root=document.documentElement;
+  var body=document.body;
+  var overlay=document.getElementById('igi2-startup-loader');
+  var fill=document.getElementById('igi2-startup-fill');
+  var info=document.getElementById('igi2-startup-info');
+  var progressbar=overlay.querySelector('[role="progressbar"]');
+  if(!overlay||!fill||!info||!progressbar)return;
+
+  var completed=false;
+  var percent=0;
+  var previousBusy=body.getAttribute('aria-busy');
+  root.classList.add('igi2-startup-lock');
+  body.setAttribute('aria-busy','true');
+  try{window.scrollTo(0,0);}catch(e){}
+
+  var blockedEvents=[
+    'click','dblclick','auxclick','pointerdown','pointerup','pointermove',
+    'pointercancel','mousedown','mouseup','mousemove','touchstart','touchmove',
+    'touchend','touchcancel','wheel','contextmenu','dragstart','drag','drop',
+    'keydown','keyup','keypress','beforeinput','input','change','submit',
+    'reset','selectstart','copy','cut','paste','focusin'
+  ];
+  function blockUserInput(event){
+    if(completed)return;
+    if(event.cancelable)event.preventDefault();
+    event.stopImmediatePropagation();
+    event.stopPropagation();
+  }
+  blockedEvents.forEach(function(type){
+    window.addEventListener(type,blockUserInput,{capture:true,passive:false});
+  });
+  window.addEventListener('scroll',blockUserInput,true);
+
+  function paint(value){
+    var next=Math.max(percent,Math.min(99,Math.floor(value)));
+    percent=next;
+    fill.style.width=next+'%';
+    info.textContent='Loading '+next+'%';
+    progressbar.setAttribute('aria-valuenow',String(next));
+  }
+  paint(0);
+
+  function readyEvent(eventName){
+    return new Promise(function(resolve){
+      if(eventName==='DOMContentLoaded'&&document.readyState!=='loading'){resolve();return;}
+      if(eventName==='load'&&document.readyState==='complete'){resolve();return;}
+      window.addEventListener(eventName,resolve,{once:true});
+    });
+  }
+
+  function waitForImageElement(img){
+    if(img.loading==='lazy')img.loading='eager';
+    var loaded=new Promise(function(resolve){
+      if(img.complete){resolve();return;}
+      img.addEventListener('load',resolve,{once:true});
+      img.addEventListener('error',resolve,{once:true});
+    });
+    return loaded.then(function(){
+      if(typeof img.decode==='function')return img.decode().catch(function(){});
+    }).catch(function(){});
+  }
+
+  function cssImageURLs(value){
+    var result=[];
+    if(!value||value==='none')return result;
+    var pattern=/url\((?:"([^"]+)"|'([^']+)'|([^)]*))\)/g;
+    var match;
+    while((match=pattern.exec(value))){
+      var source=(match[1]||match[2]||match[3]||'').trim();
+      if(!source||source.indexOf('data:')===0||source.indexOf('blob:')===0)continue;
+      try{
+        var url=new URL(source,document.baseURI);
+        url.hash='';
+        result.push(url.href);
+      }catch(e){}
+    }
+    return result;
+  }
+
+  function collectSiteAssets(){
+    var urls=new Set();
+    var imageJobs=[];
+    Array.prototype.forEach.call(document.images,function(img){
+      if(img.currentSrc||img.src){
+        try{
+          var imageURL=new URL(img.currentSrc||img.src,document.baseURI);
+          imageURL.hash='';
+          urls.add(imageURL.href);
+        }catch(e){}
+      }
+      imageJobs.push(waitForImageElement(img));
+    });
+
+    var nodes=document.querySelectorAll('body *');
+    Array.prototype.forEach.call(nodes,function(node){
+      try{
+        var styles=[getComputedStyle(node),getComputedStyle(node,'::before'),getComputedStyle(node,'::after')];
+        styles.forEach(function(style){
+          cssImageURLs(style.backgroundImage).forEach(function(url){urls.add(url);});
+          cssImageURLs(style.borderImageSource).forEach(function(url){urls.add(url);});
+          cssImageURLs(style.listStyleImage).forEach(function(url){urls.add(url);});
+        });
+      }catch(e){}
+    });
+
+    return {urls:Array.from(urls),imageJobs:imageJobs};
+  }
+
+  function preloadURL(url){
+    return new Promise(function(resolve){
+      var image=new Image();
+      var settled=false;
+      function finish(){if(settled)return;settled=true;image.onload=null;image.onerror=null;resolve();}
+      image.onload=finish;
+      image.onerror=finish;
+      image.src=url;
+      if(image.complete)finish();
+    });
+  }
+
+  async function finishLoading(){
+    await readyEvent('DOMContentLoaded');
+    paint(14);
+
+    await readyEvent('load');
+    paint(55);
+
+    if(document.fonts&&document.fonts.ready){
+      try{await document.fonts.ready;}catch(e){}
+    }
+    paint(68);
+
+    var assets=collectSiteAssets();
+    var total=assets.urls.length+assets.imageJobs.length;
+    var done=0;
+    if(total===0)paint(98);
+
+    function assetSettled(){
+      done++;
+      paint(68+(30*done/total));
+    }
+    var jobs=assets.urls.map(function(url){
+      return preloadURL(url).then(assetSettled,assetSettled);
+    });
+    assets.imageJobs.forEach(function(job){
+      jobs.push(job.then(assetSettled,assetSettled));
+    });
+    await Promise.all(jobs);
+
+    await new Promise(function(resolve){
+      requestAnimationFrame(function(){requestAnimationFrame(resolve);});
+    });
+    paint(99);
+    percent=100;
+    fill.style.width='100%';
+    info.textContent='Loading 100%';
+    progressbar.setAttribute('aria-valuenow','100');
+
+    overlay.classList.add('igi2-startup-done');
+    window.setTimeout(function(){
+      completed=true;
+      blockedEvents.forEach(function(type){
+        window.removeEventListener(type,blockUserInput,true);
+      });
+      window.removeEventListener('scroll',blockUserInput,true);
+      root.classList.remove('igi2-startup-lock');
+      if(previousBusy===null)body.removeAttribute('aria-busy');
+      else body.setAttribute('aria-busy',previousBusy);
+      overlay.remove();
+      window.dispatchEvent(new Event('igi2:loaded'));
+    },650);
+  }
+
+  finishLoading().catch(function(error){
+    console.error('IGI 2 startup loader failed:',error);
+    // Fail open rather than trapping visitors behind a loader if a browser API is unavailable.
+    percent=100;
+    fill.style.width='100%';
+    info.textContent='Loading 100%';
+    progressbar.setAttribute('aria-valuenow','100');
+    overlay.classList.add('igi2-startup-done');
+    window.setTimeout(function(){
+      completed=true;
+      blockedEvents.forEach(function(type){window.removeEventListener(type,blockUserInput,true);});
+      window.removeEventListener('scroll',blockUserInput,true);
+      root.classList.remove('igi2-startup-lock');
+      if(previousBusy===null)body.removeAttribute('aria-busy');
+      else body.setAttribute('aria-busy',previousBusy);
+      overlay.remove();
+      window.dispatchEvent(new Event('igi2:loaded'));
+    },650);
+  });
+})();
+</script>
+
 <div id="landing">
 <div class="wrap" id="top"><div class="stage">
  <div class="menu" role="menu" aria-label="Main Menu">
