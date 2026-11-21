@@ -388,7 +388,7 @@ html.igi2-startup-lock body{
   height:auto;
   max-width:none;
   object-fit:contain;
-  filter:drop-shadow(0 6px 18px rgba(0,0,0,.7));
+  filter:url(#igi2-logo-white-key) drop-shadow(0 6px 18px rgba(0,0,0,.7));
 }
 .igi2-startup-progress{
   width:var(--igi2-startup-bar-w);
@@ -430,7 +430,13 @@ html.igi2-startup-lock body{
 
 <div id="igi2-startup-loader" role="status" aria-live="polite" aria-label="Loading IGI 2 Online">
   <div class="igi2-startup-scene">
-    <img src="/assets/favicon.png" alt="I.G.I. 2 Covert Strike" width="64" height="64" decoding="async" fetchpriority="high">
+    <svg aria-hidden="true" width="0" height="0" focusable="false" style="position:absolute;overflow:hidden">
+      <filter id="igi2-logo-white-key" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -0.9 -0.9 -0.9 0 2.7"/>
+      </filter>
+    </svg>
+
+    <img src="https://vistapointe.net/images/project-igi-2-wallpaper-15.jpg" alt="I.G.I. 2 Covert Strike" width="512" height="512" decoding="async" fetchpriority="high">
   </div>
   <div class="igi2-startup-progress">
     <div class="igi2-startup-track" role="progressbar" aria-label="Website loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
