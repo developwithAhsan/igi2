@@ -7,12 +7,18 @@ const mainPath = resolve(root, 'main.js');
 const gameFilesPath = resolve(root, 'game-files.js');
 const programPath = resolve('engine/OpenIGI/apps/OpenIGI.Web/Program.cs');
 let siteIndex = await readFile(resolve('site/index.html'), 'utf8');
+if (!siteIndex.includes('id="play-status"')) {
+  const playRowEnd = /(<div class="ld" id="loading"[\\s\\S]*?<\\/div>)(\\s*<\\/li>)/;
+  if (!playRowEnd.test(siteIndex)) throw new Error('Could not find the original Play-row loading markup.');
+  siteIndex = siteIndex.replace(playRowEnd, '$1<span class="play-status" id="play-status" role="status" aria-live="polite" hidden></span>$2');
+}
+if (!siteIndex.includes('id="progress-meta"')) siteIndex = siteIndex.replace('<span class="pc" id="pc">0%</span>', '<span class="pc-stack"><span class="pc" id="pc">0%</span><small class="progress-meta" id="progress-meta"></small></span>');
 const oldOuterGate = "if(!window.igi2EngineReady){say('Game engine is still preparing. Please select Play again in a moment.',2200);return;}";
-const newOuterGate = "if(!window.igi2EngineReady){say(window.igi2EngineError?'WebGPU check failed: '+window.igi2EngineError:'Checking WebGPU graphics… please try again in a moment.',3000);return;}";
+const newOuterGate = "if(!window.igi2EngineReady){const s=document.getElementById('play-status');if(s){s.textContent=window.igi2EngineError||'Checking GPU compatibility…';s.hidden=false;}return;}";
 if (!siteIndex.includes(oldOuterGate)) throw new Error('The homepage WebGPU Play gate is missing.');
 siteIndex = siteIndex.replace(oldOuterGate, newOuterGate);
 const oldOuterProgress = "li.classList.add('loading');f.style.width='100%';p.textContent='OPENING';";
-const newOuterProgress = "li.classList.add('loading');f.style.width='0%';p.textContent='CHECKING';";
+const newOuterProgress = "const s=document.getElementById('play-status'),meta=document.getElementById('progress-meta');if(s){s.hidden=true;s.textContent='';}if(meta)meta.textContent='';li.classList.add('loading');f.style.width='0%';p.textContent='CHECKING';";
 if (!siteIndex.includes(oldOuterProgress)) throw new Error('The homepage fake 100% progress indicator is missing.');
 siteIndex = siteIndex.replace(oldOuterProgress, newOuterProgress);
 const outerReadyAnchor = "window.igi2EngineReady=false;";
@@ -22,12 +28,13 @@ const outerReadyBridge = [
   "window.addEventListener('igi2-download-progress',event=>{",
   "  if(!busy)return;",
   "  const detail=event.detail||{};",
-  "  const fill=document.getElementById('fill'),pc=document.getElementById('pc');",
+  "  const fill=document.getElementById('fill'),pc=document.getElementById('pc'),meta=document.getElementById('progress-meta');",
   "  if(!fill||!pc)return;",
-  "  if(detail.fraction===null){pc.textContent=detail.value||detail.label||'CONNECTING';return;}",
+  "  if(detail.fraction===null){pc.textContent='…';if(meta)meta.textContent=detail.value||detail.label||'Connecting…';return;}",
   "  const percent=Math.max(0,Math.min(100,Math.round(detail.fraction*100)));",
   "  fill.style.width=percent+'%';",
-  "  pc.textContent=detail.value||percent+'%';",
+  "  pc.textContent=percent+'%';",
+  "  if(meta)meta.textContent=(detail.value||'').replace(/^\\d+%\\s*·\\s*/,'');",
   "});",
   "window.addEventListener('igi2-download-failed',()=>{",
   "  busy=false;items[0].classList.remove('loading');",
@@ -36,6 +43,7 @@ const outerReadyBridge = [
   "});"
 ].join('\n');
 if (!siteIndex.includes(outerReadyAnchor)) throw new Error('The homepage readiness bridge is missing.');
+siteIndex = siteIndex.replace("say('The browser game engine is not available on this device.',2200);return;", "const s=document.getElementById('play-status');if(s){s.textContent=window.igi2EngineError||'The browser game engine is not available on this device.';s.hidden=false;}return;");
 
 siteIndex = siteIndex.replace(outerReadyAnchor, outerReadyBridge);
 const rotateMarkup = '<div class="igi2-rotate-hint" id="rotate-hint" hidden role="status"><span class="rotate-phone" aria-hidden="true">▱ ↻</span><span><strong>Rotate your phone</strong><small>Landscape mode mein phone ko ghumayein</small></span></div>';
@@ -46,6 +54,10 @@ if (!siteIndex.includes('id="rotate-hint"')) {
   siteIndex = siteIndex.slice(0, afterSection) + rotateMarkup + siteIndex.slice(afterSection);
 }
 const playerStyles = `
+#landing .play-status{position:absolute;left:50%;top:calc(100% + 2px);transform:translateX(-50%);width:min(88vw,520px);padding:2px 7px;color:#ffd7a1;font:600 11px/1.25 Arial,sans-serif;text-align:center;text-shadow:0 1px 3px #000;white-space:normal;z-index:5}
+#landing .play-status[hidden]{display:none!important}
+#landing .pc-stack{display:inline-flex;flex-direction:column;align-items:flex-start;min-width:calc(54*var(--u));line-height:1.05}
+#landing .progress-meta{display:block;max-width:220px;color:#d8e8ff;font:600 9px/1.2 Arial,sans-serif;white-space:normal;text-shadow:0 1px 3px #000}
 #engine-overlay #player-shell{position:relative}
 #engine-overlay .frame-actions{position:absolute;right:18px;bottom:16px;z-index:20;width:auto;min-height:0;justify-content:flex-end;padding:0;background:transparent;gap:10px}
 #engine-overlay .tool-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:112px;min-height:42px;padding:9px 15px;border:1px solid rgba(130,190,225,.65);border-radius:8px;background:rgba(5,22,38,.82);color:#eaf6ff;font:600 13px/1.1 Rajdhani,Arial,sans-serif;box-shadow:0 5px 22px rgba(0,0,0,.35);backdrop-filter:blur(8px);cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
