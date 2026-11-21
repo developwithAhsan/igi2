@@ -14,11 +14,12 @@ let program = await readFile(programPath, 'utf8');
 let js = await readFile(mainPath, 'utf8');
 
 // Keep the IGI 2 brand separate from the title supported by the browser runtime.
-// Hosted data can only be enabled explicitly by the site owner with a data-host URL.
+// Default to the same first-game data endpoint used by the OpenIGI browser build; a site owner can override it with ?data-host=.
 js = js.replace(
   /const HOSTED_DATA = new URL\([\s\S]*?\);/,
-  "const HOSTED_DATA = query.get('data-host') ? new URL(query.get('data-host'), location.href).href.replace(/\\/?$/, '/') : null;"
+  "const HOSTED_DATA = new URL(query.get('data-host') || 'https://data.openigi.com/igi1/', location.href).href.replace(/\\/?$/, '/');"
 );
+if (!js.includes("const HOSTED_DATA = new URL(query.get('data-host') || 'https://data.openigi.com/igi1/'")) throw new Error('Hosted IGI 1 data source was not configured.');
 js = js.replace(
   'const hosted = await files.hostedStatus(HOSTED_DATA);',
   'const hosted = HOSTED_DATA ? await files.hostedStatus(HOSTED_DATA) : null;'
