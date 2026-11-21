@@ -193,7 +193,7 @@ const oldDownloadBlock = [
   "    };",
   "  }",
   "  const read = await files.load(source, fs, GAME_ROOT, (done, total) =>",
-  "    progress(source.hosted ? 'Unpacking game files' : 'Reading game files', total ? done / total : 0, `${mb(done)} of ${mb(total)} MB`));",
+  "    progress(source.hosted ? 'Unpacking game files' : 'Reading game files', total ? done / total : 0, `${megabytes(done)} of ${megabytes(total)} MB`));",
   "  console.log(`Read ${read.files} files; ${read.deferred} wait for their missions.`);",
   "  if (source.hosted) source.onDownload = null;"
 ].join('\n');
