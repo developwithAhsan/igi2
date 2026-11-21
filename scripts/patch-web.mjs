@@ -8,9 +8,11 @@ const gameFilesPath = resolve(root, 'game-files.js');
 const programPath = resolve('engine/OpenIGI/apps/OpenIGI.Web/Program.cs');
 let siteIndex = await readFile(resolve('site/index.html'), 'utf8');
 if (!siteIndex.includes('id="play-status"')) {
-  const playRowEnd = /(<div class="ld" id="loading"[\\s\\S]*?<\\/div>)(\\s*<\\/li>)/;
-  if (!playRowEnd.test(siteIndex)) throw new Error('Could not find the original Play-row loading markup.');
-  siteIndex = siteIndex.replace(playRowEnd, '$1<span class="play-status" id="play-status" role="status" aria-live="polite" hidden></span>$2');
+  const playRowStart = siteIndex.indexOf('<div class="ld" id="loading"');
+  const playRowClose = siteIndex.indexOf('</div>', playRowStart);
+  if (playRowStart < 0 || playRowClose < 0) throw new Error('Could not find the original Play-row loading markup.');
+  const playRowEnd = playRowClose + '</div>'.length;
+  siteIndex = siteIndex.slice(0, playRowEnd) + '<span class="play-status" id="play-status" role="status" aria-live="polite" hidden></span>' + siteIndex.slice(playRowEnd);
 }
 if (!siteIndex.includes('id="progress-meta"')) siteIndex = siteIndex.replace('<span class="pc" id="pc">0%</span>', '<span class="pc-stack"><span class="pc" id="pc">0%</span><small class="progress-meta" id="progress-meta"></small></span>');
 const oldOuterGate = "if(!window.igi2EngineReady){say('Game engine is still preparing. Please select Play again in a moment.',2200);return;}";
