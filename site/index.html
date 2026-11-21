@@ -392,7 +392,7 @@ html{scroll-behavior:smooth}
   window.addEventListener('scroll',blockUserInput,true);
 
   function setProgress(value){
-    const next=Math.max(percent,Math.min(99,Math.floor(value)));
+    const next=value>=100?100:Math.max(percent,Math.min(99,Math.floor(value)));
     percent=next;fill.style.width=next+'%';info.textContent='Loading '+next+'%';
     progressbar.setAttribute('aria-valuenow',String(next));
     if(value>=100)finish();
@@ -405,7 +405,6 @@ html{scroll-behavior:smooth}
         completed=true;
         blockedEvents.forEach(type=>window.removeEventListener(type,blockUserInput,true));
         window.removeEventListener('scroll',blockUserInput,true);
-        ['pointerdown','touchstart','keydown','click'].forEach(type=>window.removeEventListener(type,onGesture,true));
         root.classList.remove('igi2-startup-lock');
         if(previousBusy===null)body.removeAttribute('aria-busy');else body.setAttribute('aria-busy',previousBusy);
         loader.remove();document.dispatchEvent(new Event('igi2:loaded'));
