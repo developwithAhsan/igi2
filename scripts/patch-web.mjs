@@ -221,7 +221,7 @@ js += [
   "  item.addEventListener('click', () => playMenuSound(item.id === 'back' ? 'back' : 'select'));",
   "}",
   "menuMusic.addEventListener('error', () => console.warn('IGI 2 menu music could not be loaded from /assets/audio/menu-background.m4a'));"
-].join('\\n') + '\\n';
+].join('\n') + '\n';
 
 await writeFile(gameFilesPath, gameFiles);
 await writeFile(programPath, program);
