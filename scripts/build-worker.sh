@@ -78,6 +78,11 @@ else
 fi
 cp -a "$WEB_ROOT/." "$ROOT/publish/"
 
+# Publish the website pages, styles, images, audio and SEO files alongside the game runtime.
+# site/index.html and site/favicon.svg are the same files already patched into the engine web root.
+echo "==> Copying the IGI 2 website pages and static assets"
+cp -a "$ROOT/site/." "$ROOT/publish/"
+
 echo "==> Verifying the static asset output"
 test -s "$ROOT/publish/index.html" || {
   echo "Flattening failed: publish/index.html is missing." >&2
