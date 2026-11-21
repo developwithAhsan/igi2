@@ -39,7 +39,12 @@ if (!siteIndex.includes(outerReadyAnchor)) throw new Error('The homepage readine
 
 siteIndex = siteIndex.replace(outerReadyAnchor, outerReadyBridge);
 const rotateMarkup = '<div class="igi2-rotate-hint" id="rotate-hint" hidden role="status"><span class="rotate-phone" aria-hidden="true">▱ ↻</span><span><strong>Rotate your phone</strong><small>Landscape mode mein phone ko ghumayein</small></span></div>';
-if (!siteIndex.includes('id="rotate-hint"')) siteIndex = siteIndex.replace('</section></div>\\n<script>', '</section>' + rotateMarkup + '</div>\\n<script>');
+if (!siteIndex.includes('id="rotate-hint"')) {
+  const close = siteIndex.lastIndexOf('</section></div>');
+  if (close < 0) throw new Error('The player section closing markup is missing.');
+  const afterSection = close + '</section>'.length;
+  siteIndex = siteIndex.slice(0, afterSection) + rotateMarkup + siteIndex.slice(afterSection);
+}
 const playerStyles = `
 #engine-overlay #player-shell{position:relative}
 #engine-overlay .frame-actions{position:absolute;right:18px;bottom:16px;z-index:20;width:auto;min-height:0;justify-content:flex-end;padding:0;background:transparent;gap:10px}
