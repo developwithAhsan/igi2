@@ -212,7 +212,7 @@ const newDownloadBlock = [
   "    };",
   "  }",
   "  const read = await files.load(source, fs, GAME_ROOT, (done, total) =>",
-  "    progress(source.hosted ? 'Preparing game files' : 'Reading game files', total ? done / total : 0, `${megabytes(done)} of ${megabytes(total)} MB`));",
+  "    progress(source.hosted ? 'Preparing game files' : 'Reading game files', source.hosted ? null : (total ? done / total : 0), `${megabytes(done)} of ${megabytes(total)} MB`));",
   "  if (source.hosted && typeof source.prefetch === 'function') {",
   "    await source.prefetch();",
   "    progress('Game files ready', 1, `100% · ${megabytes(pendingDownload?.total ?? 0)} MB`);",
