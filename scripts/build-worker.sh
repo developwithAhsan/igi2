@@ -83,6 +83,22 @@ cp -a "$WEB_ROOT/." "$ROOT/publish/"
 echo "==> Copying the IGI 2 website pages and static assets"
 cp -a "$ROOT/site/." "$ROOT/publish/"
 
+# The engine build patches the homepage with the WebGPU-ready Play gate and live download bridge.
+# Restore that patched homepage after copying the source site, which would otherwise overwrite it.
+cp "$WEB_ROOT/index.html" "$ROOT/publish/index.html"
+grep -Fq "igi2-download-progress" "$ROOT/publish/index.html" || {
+  echo "The published homepage is missing the live game-download progress bridge." >&2
+  exit 1
+}
+grep -Fq "Checking WebGPU graphics" "$ROOT/publish/index.html" || {
+  echo "The published homepage is missing the WebGPU readiness gate." >&2
+  exit 1
+}
+if grep -Fq "Game engine is still preparing" "$ROOT/publish/index.html"; then
+  echo "The old homepage readiness message was copied over the patched Play flow." >&2
+  exit 1
+fi
+
 # Rebuild the exact original menu soundtrack from small, Git-tracked base64 chunks.
 AUDIO_PARTS="$ROOT/audio_chunks/menu-background"
 if [[ -d "$AUDIO_PARTS" ]]; then
