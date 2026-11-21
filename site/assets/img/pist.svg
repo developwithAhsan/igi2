@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="Weapons and controls">
+<defs><linearGradient id="bg" x2="0" y2="1"><stop stop-color="#354236"/><stop offset="1" stop-color="#030911"/></linearGradient><linearGradient id="glow" x2="1" y2="1"><stop stop-color="#b2d98f" stop-opacity=".55"/><stop offset="1" stop-color="#185c9d" stop-opacity=".03"/></linearGradient><pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="#b2d98f" stroke-opacity=".13" stroke-width="1"/></pattern></defs>
+<rect width="1280" height="720" fill="url(#bg)"/><rect width="1280" height="720" fill="url(#grid)"/>
+<path d="M0 440L170 325 290 390 455 235 620 395 770 260 930 385 1115 250 1280 350V720H0Z" fill="#09182a" stroke="#b2d98f" stroke-opacity=".55" stroke-width="3"/>
+<path d="M0 525L180 450 340 495 525 360 690 493 855 390 1040 500 1200 410 1280 450V720H0Z" fill="#050d17" stroke="#b2d98f" stroke-opacity=".32" stroke-width="2"/>
+<path d="M0 0H1280V720H0Z" fill="url(#glow)"/>
+<g fill="none" stroke="#b2d98f" stroke-width="3" opacity=".7"><path d="M55 80h135M55 80v54M1225 80h-135M1225 80v54M55 640h135M55 640v-54M1225 640h-135M1225 640v-54"/><circle cx="640" cy="350" r="100" stroke-dasharray="8 14"/><circle cx="640" cy="350" r="72" stroke-opacity=".4"/><path d="M640 215v270M505 350h270M615 350h50M640 325v50"/></g>
+<g fill="#d7eaff" font-family="Arial,sans-serif" text-anchor="middle"><text x="640" y="585" font-size="46" font-weight="700" letter-spacing="8">WEAPONS AND CONTROLS</text><text x="640" y="625" font-size="18" letter-spacing="5" opacity=".7">IGI 2 • COVERT STRIKE • FAN PROJECT</text></g><rect x="20" y="20" width="1240" height="680" fill="none" stroke="#b2d98f" stroke-opacity=".45" stroke-width="2"/></svg>

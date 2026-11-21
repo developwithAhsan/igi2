@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://igi2.online/sitemap.xml
