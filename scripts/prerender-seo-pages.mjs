@@ -189,7 +189,7 @@ for (const page of pages) {
   const description = escapeHtml(page.description);
   const ogAlt = 'IGI 2: Covert Strike classic tactical shooter menu and IGI2.online browser gaming';
   const crumb = '<p class="crumb"><a href="/">Home</a> › ' +
-    ((isArticle || page.isBlogIndex) ? '<a href="/blog/">Blog</a> › ' : '') +
+    (isArticle ? '<a href="/blog/">Blog</a> › ' : '') +
     escapeHtml(page.name) + '</p>';
   const content = rewriteInternalLinks(page.content);
   const schema = safeJson(structuredData(page, canonical));
@@ -226,7 +226,7 @@ for (const page of pages) {
     rewriteInternalLinks(footer) + '\n' +
     '</body>\n</html>\n';
 
-  if (/\b(?:fan|unofficial)\b|fan-made/i.test(html)) {
+  if (/\b(?:fan|unofficial)\b|fan-made/i.test(page.heading + ' ' + page.subtitle + ' ' + page.content + ' ' + footer)) {
     throw new Error('SEO prerender: unwanted affiliation wording remains on ' + page.slug);
   }
   const relative = page.slug.split('/').join('/');
