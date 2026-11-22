@@ -415,7 +415,22 @@ html{scroll-behavior:smooth}
 @media(prefers-reduced-motion:reduce){
  .site *,.site *::before,.site *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
-\n/* Homepage controls: preserve horizontal keycaps and readable descriptions. */\n.site #controls{min-width:0;width:100%;}\n.site #controls .cx{display:grid;grid-template-columns:minmax(120px,min(34%,225px)) minmax(0,1fr);align-items:center;gap:8px 14px;}\n.site #controls .kk{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px;min-width:0;}\n.site #controls .k{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;writing-mode:horizontal-tb;white-space:nowrap;word-break:normal;min-width:38px;}\n.site #controls .ct{min-width:0;writing-mode:horizontal-tb;overflow-wrap:normal;}\n.site #JFWebsiteWidget-01a20385d44070008ebd3916d899f464f2b2{width:100%;min-height:520px;max-width:100%;overflow:visible;}\n.site #JFWebsiteWidget-01a20385d44070008ebd3916d899f464f2b2 iframe{display:block;width:100%!important;max-width:100%!important;border:0!important;}\n@media(max-width:820px){.site #controls .cx{grid-template-columns:minmax(0,1fr);gap:5px;} .site #controls .kk{flex-direction:row;flex-wrap:wrap;} .site #controls .ct{padding-bottom:4px;}}\n</style>
+
+/* Homepage controls: keep keycaps in a horizontal row and descriptions readable. */
+.site #controls{display:block;min-width:0;width:100%;writing-mode:horizontal-tb}
+.site #controls .cg{display:block;min-width:0;width:100%}
+.site #controls .cx{display:grid;grid-template-columns:minmax(110px,225px) minmax(0,1fr);align-items:center;gap:8px 14px;padding:4px 0;min-width:0}
+.site #controls .kk{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px;min-width:0;writing-mode:horizontal-tb}
+.site #controls .kk .k{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;writing-mode:horizontal-tb;white-space:nowrap;word-break:keep-all;min-width:38px}
+.site #controls .ct{display:block;min-width:0;writing-mode:horizontal-tb;white-space:normal;overflow-wrap:break-word;word-break:normal;line-height:1.35}
+.site #JFWebsiteWidget-01a20385d44070008ebd3916d899f464f2b2{display:block;width:100%;min-height:520px;max-width:100%;overflow:visible}
+.site #JFWebsiteWidget-01a20385d44070008ebd3916d899f464f2b2 iframe{display:block;width:100%!important;max-width:100%!important;border:0!important}
+@media(max-width:820px){
+ .site #controls .cx{grid-template-columns:minmax(0,1fr);gap:5px}
+ .site #controls .kk{flex-direction:row;flex-wrap:wrap}
+ .site #controls .ct{padding-bottom:4px}
+}
+</style>
 </head><body>
 
 <div id="loader" role="status" aria-live="polite" aria-label="Loading I.G.I. 2 Covert Strike">
