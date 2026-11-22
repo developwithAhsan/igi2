@@ -19,7 +19,7 @@ const newOuterGate = "if(!window.igi2EngineReady){const s=document.getElementByI
 if (!siteIndex.includes(oldOuterGate)) throw new Error('The homepage WebGPU Play gate is missing.');
 siteIndex = siteIndex.replace(oldOuterGate, newOuterGate);
 const oldOuterProgress = "li.classList.add('loading');f.style.width='100%';p.textContent='OPENING';";
-const newOuterProgress = "const s=document.getElementById('play-status'),meta=document.getElementById('progress-meta');if(s){s.hidden=true;s.textContent='';}if(meta)meta.textContent='';li.classList.add('loading');f.style.width='0%';p.textContent='CHECKING';";
+const newOuterProgress = "const s=document.getElementById('play-status'),meta=document.getElementById('progress-meta'),screen=document.getElementById('igi2-download-screen');if(s){s.hidden=true;s.textContent='';}if(meta)meta.textContent='';if(screen){screen.hidden=false;screen.dataset.error='false';}li.classList.add('loading');f.style.width='0%';p.textContent='CHECKING';";
 if (!siteIndex.includes(oldOuterProgress)) throw new Error('The homepage fake 100% progress indicator is missing.');
 siteIndex = siteIndex.replace(oldOuterProgress, newOuterProgress);
 const outerReadyAnchor = "window.igi2EngineReady=false;";
@@ -30,13 +30,15 @@ const outerReadyBridge = [
   "  if(!busy)return;",
   "  const detail=event.detail||{};",
   "  const fill=document.getElementById('fill'),pc=document.getElementById('pc'),meta=document.getElementById('progress-meta');",
-  "  if(!fill||!pc)return;",
-  "  if(detail.fraction===null){pc.textContent='…';if(meta)meta.textContent=detail.value||detail.label||'Connecting…';return;}",
+  "  const screen=document.getElementById('igi2-download-screen'),screenFill=document.getElementById('igi2-download-fill'),screenPercent=document.getElementById('igi2-download-percent'),screenDetail=document.getElementById('igi2-download-detail'),screenHeading=document.getElementById('igi2-download-heading'),screenStage=document.getElementById('igi2-download-stage');",
+  "  if(screen){screen.hidden=false;screen.dataset.error='false';if(screenHeading)screenHeading.textContent=detail.label||'Preparing your game';if(screenStage)screenStage.textContent=detail.label==='Downloading game files'?'Downloading and verifying game data…':'Please wait while the game files are prepared';}",
+  "  if(detail.fraction===null){if(pc)pc.textContent='…';if(meta)meta.textContent=detail.value||detail.label||'Connecting…';if(screenPercent)screenPercent.textContent='…';if(screenDetail)screenDetail.textContent=detail.value||'Connecting…';return;}",
   "  const percent=Math.max(0,Math.min(100,Math.round(detail.fraction*100)));",
-  "  fill.style.width=percent+'%';",
-  "  pc.textContent=percent+'%';",
+  "  if(fill)fill.style.width=percent+'%';if(pc)pc.textContent=percent+'%';",
   "  if(meta)meta.textContent=(detail.value||'').replace(/^\\d+%\\s*·\\s*/,'');",
+  "  if(screenFill)screenFill.style.width=percent+'%';if(screenPercent)screenPercent.textContent=percent+'%';if(screenDetail)screenDetail.textContent=detail.value||String(percent)+'%';",
   "});",
+  "window.addEventListener('igi2-game-started',()=>{const screen=document.getElementById('igi2-download-screen');if(screen)screen.hidden=true;});",
   "window.addEventListener('igi2-download-failed',()=>{",
   "  busy=false;items[0].classList.remove('loading');",
   "  document.getElementById('fill').style.width='0';",
@@ -54,7 +56,23 @@ if (!siteIndex.includes('id="rotate-hint"')) {
   const afterSection = close + '</section>'.length;
   siteIndex = siteIndex.slice(0, afterSection) + rotateMarkup + siteIndex.slice(afterSection);
 }
+const downloadScreenMarkup = '<div id="igi2-download-screen" class="igi2-download-screen" hidden role="status" aria-live="polite"><div class="igi2-download-card"><div class="igi2-download-brand">IGI 2 <span>Covert Strike</span></div><div class="igi2-download-heading" id="igi2-download-heading">Preparing your game</div><div class="igi2-download-track"><div class="igi2-download-fill" id="igi2-download-fill"></div></div><div class="igi2-download-numbers"><strong id="igi2-download-percent">0%</strong><span id="igi2-download-detail">Connecting to game files…</span></div><div class="igi2-download-stage" id="igi2-download-stage">Please wait while the game files are prepared</div></div></div>';
+if (!siteIndex.includes('id="igi2-download-screen"')) siteIndex = siteIndex.replace('</body>', downloadScreenMarkup + '\n</body>');
 const playerStyles = `
+#igi2-download-screen{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;width:100%;min-height:100vh;min-height:100dvh;padding:24px;background:#000;color:#f4f7fb;font-family:Arial,sans-serif;box-sizing:border-box}
+#igi2-download-screen[hidden]{display:none!important}
+#igi2-download-screen .igi2-download-card{width:min(760px,94vw);text-align:center}
+#igi2-download-screen .igi2-download-brand{margin-bottom:clamp(28px,7vh,64px);color:#e7edf5;font:900 clamp(25px,5vw,42px)/1 Rajdhani,Arial,sans-serif;letter-spacing:.16em}
+#igi2-download-screen .igi2-download-brand span{display:block;margin-top:8px;color:#8d9bad;font:700 clamp(10px,2vw,14px)/1 Arial,sans-serif;letter-spacing:.32em}
+#igi2-download-screen .igi2-download-heading{margin-bottom:22px;color:#f4f7fb;font:700 clamp(19px,3.5vw,28px)/1.25 Rajdhani,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+#igi2-download-screen .igi2-download-track{height:clamp(22px,4vw,34px);padding:4px;overflow:hidden;border:1px solid #5d6877;border-radius:5px;background:#171b21}
+#igi2-download-screen .igi2-download-fill{width:0;height:100%;border-radius:2px;background:linear-gradient(90deg,#1677c8,#48b7f5 65%,#b5eaff);transition:width .18s ease}
+#igi2-download-screen .igi2-download-numbers{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-top:13px;text-align:left}
+#igi2-download-screen .igi2-download-numbers strong{flex:none;color:#fff;font:800 clamp(22px,5vw,32px)/1 Rajdhani,Arial,sans-serif;font-variant-numeric:tabular-nums}
+#igi2-download-screen .igi2-download-numbers span{color:#b8c5d3;font:600 clamp(11px,2vw,14px)/1.4 Arial,sans-serif;text-align:right;overflow-wrap:anywhere}
+#igi2-download-screen .igi2-download-stage{margin-top:20px;color:#8795a5;font:12px/1.5 Arial,sans-serif}
+#igi2-download-screen[data-error=true] .igi2-download-heading{color:#ff9388}
+@media(max-width:520px){#igi2-download-screen{padding:18px}#igi2-download-screen .igi2-download-numbers{align-items:flex-start;flex-direction:column;gap:6px}#igi2-download-screen .igi2-download-numbers span{text-align:left}#igi2-download-screen .igi2-download-brand{margin-bottom:38px}}
 #landing .igi2-play-row #action .play-status{position:absolute;left:calc(50% + 74 * var(--igi2-unit));top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;gap:7px;width:auto;max-width:calc(50% - 86 * var(--igi2-unit));padding:2px 5px;color:#d8efff;font:600 calc(12 * var(--igi2-unit))/1.15 "Rajdhani","Arial Narrow",sans-serif;text-shadow:0 1px 3px #000;white-space:normal;z-index:6}
 #landing .play-status[hidden]{display:none!important}
 #landing .play-status[data-tone="error"]{color:#ffb2a9}
@@ -156,7 +174,7 @@ js = js.replace(
   "function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n  $('game-frame').classList.remove('is-running');\n  $('game-prompt').hidden = false;\n  $('engine-overlay').hidden = true;\n  window.dispatchEvent(new Event('igi2-game-returned'));\n}"
 );
 js = js.replace(
-  '  landing.hidden = true;\n  canvas.hidden = false;\n  canvas.focus();\n  game.Boot(args);',
+  '  landing.hidden = true;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  $('engine-overlay').hidden = false;\n  canvas.focus();\n  window.dispatchEvent(new Event(\'igi2-game-started\'));\n  game.Boot(args);',
   "  landing.hidden = true;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  $('engine-overlay').hidden = false;\n  canvas.focus();\n  game.Boot(args);"
 );
 
@@ -283,7 +301,7 @@ gameFiles = gameFiles.replace(sourceListMarker, sourceListReplacement);
 // Download the full hosted first-game data set before launching, with one accurate combined progress bar.
 const prefetchGuard = [
   "      const connection = navigator.connection;",
-  "      if (connection?.saveData || /(^|-)(2g|3g)$/.test(connection?.effectiveType ?? '')) return;"
+  "      // Complete all hosted game data before boot after Play is pressed."
 ].join('\n');
 if (!gameFiles.includes(prefetchGuard)) throw new Error('Could not enable full hosted game download before launch.');
 const oldPrefetchNames = "const names = Object.keys(index.bundles).filter(name => name !== 'base').sort((a, b) => order(a) - order(b));";
