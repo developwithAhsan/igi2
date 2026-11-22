@@ -1,3 +1,4 @@
+// Build-time SEO prerendering: publish static, route-specific HTML for search crawlers.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
