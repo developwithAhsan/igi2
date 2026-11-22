@@ -182,6 +182,8 @@ const sharedHead = [
   '<link rel="apple-touch-icon" href="/assets/favicon.png">',
   '<link rel="preconnect" href="https://fonts.googleapis.com">',
   '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+  '<link rel="preload" href="https://fonts.gstatic.com/s/rajdhani/v17/LDI2apCSOBg7S-QT7pbYF_OreefkkbIx.woff2" as="font" type="font/woff2" crossorigin>',
+  '<link rel="preload" href="https://fonts.gstatic.com/s/rajdhani/v17/LDI2apCSOBg7S-QT7pa8FvOreefkkbIx.woff2" as="font" type="font/woff2" crossorigin>',
   '<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">'
 ].join('\n');
 
