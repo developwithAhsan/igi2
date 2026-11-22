@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
 <title id="title">IGI 2: Covert Strike — IGI2.online</title>
-<desc id="desc">Classic tactical shooter menu background with IGI2.online fan hub branding.</desc>
+<desc id="desc">Classic tactical shooter menu background with IGI2.online browser gaming branding.</desc>
 <defs>
  <linearGradient id="shade" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#020811" stop-opacity=".78"/><stop offset=".48" stop-color="#06182b" stop-opacity=".55"/><stop offset="1" stop-color="#020811" stop-opacity=".94"/></linearGradient>
  <linearGradient id="panel" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#071b30" stop-opacity=".92"/><stop offset="1" stop-color="#071b30" stop-opacity=".18"/></linearGradient>
@@ -4055,7 +4055,7 @@ s6aQG+0qy+ZB3CC7SLK7A7GUrSwZNpPdHEWhADE+qLVp2KYBADZRomYMqpm/
 <path d="M58 58h96M58 58v52M1142 58h-96M1142 58v52M58 572h96M58 572v-52M1142 572h-96M1142 572v-52" fill="none" stroke="#9bcfff" stroke-width="2" stroke-opacity=".8"/>
 <g transform="translate(86 125)">
  <rect x="0" y="0" width="8" height="310" fill="url(#accent)" filter="url(#glow)"/>
- <text x="34" y="36" fill="#b8d9ff" font-family="Arial,sans-serif" font-size="18" font-weight="700" letter-spacing="6">IGI2.ONLINE  /  FAN-MADE HUB</text>
+ <text x="34" y="36" fill="#b8d9ff" font-family="Arial,sans-serif" font-size="18" font-weight="700" letter-spacing="6">IGI2.ONLINE  /  BROWSER GAME HUB</text>
  <text x="28" y="145" fill="#fff" font-family="Arial,sans-serif" font-size="106" font-weight="900" letter-spacing="2">IGI 2</text>
  <text x="34" y="205" fill="#dceeff" font-family="Arial,sans-serif" font-size="46" font-weight="800" letter-spacing="4">COVERT STRIKE</text>
  <path d="M34 232H690" stroke="#8fc6ff" stroke-width="3" stroke-opacity=".85"/>
