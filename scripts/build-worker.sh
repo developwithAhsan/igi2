@@ -86,6 +86,10 @@ cp -a "$ROOT/site/." "$ROOT/publish/"
 # The engine build patches the homepage with the WebGPU-ready Play gate and live download bridge.
 # Restore that patched homepage after copying the source site, which would otherwise overwrite it.
 cp "$WEB_ROOT/index.html" "$ROOT/publish/index.html"
+
+# Generate static HTML for every information page and blog article so search crawlers
+# receive page-specific content and metadata without requiring client-side JavaScript.
+node "$ROOT/scripts/prerender-seo-pages.mjs"
 grep -Fq "igi2-download-progress" "$ROOT/publish/index.html" || {
   echo "The published homepage is missing the live game-download progress bridge." >&2
   exit 1
