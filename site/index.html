@@ -416,57 +416,49 @@ html{scroll-behavior:smooth}
  .site *,.site *::before,.site *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
 
-/* Homepage controls: force normal horizontal text and restore the original two-column key/description rows. */
-.site .pn.ac #controls,
-.site .pn.ac #controls *{
-  writing-mode:horizontal-tb!important;
-  text-orientation:mixed!important;
-  direction:ltr!important;
+/* Homepage controls: hard reset the right panel so every key and description stays horizontal. */
+html body main.site .pn.ac{
+  grid-template-columns:minmax(0,.85fr) 2px minmax(0,1.15fr)!important;
+  align-items:start!important;
 }
-.site .pn.ac #controls{display:block!important;min-width:0!important;width:100%!important;max-width:100%!important}
-.site .pn.ac #controls .cg{display:block!important;width:100%!important;min-width:0!important}
-.site .pn.ac #controls .cx{
-  display:grid!important;
-  grid-template-columns:minmax(110px,225px) minmax(0,1fr)!important;
-  align-items:center!important;
-  gap:8px 14px!important;
-  width:100%!important;
-  min-width:0!important;
-  padding:4px 0!important;
+html body main.site .pn.ac #controls{
+  display:block!important;width:100%!important;min-width:0!important;max-width:none!important;
+  overflow:visible!important;writing-mode:horizontal-tb!important;text-orientation:mixed!important;direction:ltr!important;
 }
-.site .pn.ac #controls .kk{
-  display:flex!important;
-  flex-direction:row!important;
-  flex-wrap:wrap!important;
-  align-items:center!important;
-  justify-content:flex-start!important;
-  gap:6px!important;
-  min-width:0!important;
-  white-space:normal!important;
+html body main.site .pn.ac #controls *{
+  writing-mode:horizontal-tb!important;text-orientation:mixed!important;
+  text-combine-upright:none!important;direction:ltr!important;
 }
-.site .pn.ac #controls .kk .k{
-  display:inline-flex!important;
-  flex:0 0 auto!important;
-  align-items:center!important;
-  justify-content:center!important;
-  white-space:nowrap!important;
-  word-break:keep-all!important;
-  min-width:38px;
+html body main.site .pn.ac #controls .cg{display:block!important;width:100%!important;min-width:0!important}
+html body main.site .pn.ac #controls .cx{
+  display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;
+  gap:8px 14px!important;width:100%!important;min-width:0!important;padding:5px 0!important;
 }
-.site .pn.ac #controls .ct{
-  display:block!important;
-  min-width:0!important;
-  white-space:normal!important;
-  overflow-wrap:break-word!important;
-  word-break:normal!important;
-  line-height:1.35!important;
+html body main.site .pn.ac #controls .kk{
+  display:flex!important;flex:0 0 175px!important;flex-direction:row!important;flex-wrap:wrap!important;
+  align-items:center!important;justify-content:flex-start!important;gap:6px!important;
+  width:175px!important;min-width:0!important;white-space:normal!important;
+}
+html body main.site .pn.ac #controls .kk .k{
+  display:inline-flex!important;flex:0 0 auto!important;align-items:center!important;justify-content:center!important;
+  writing-mode:horizontal-tb!important;white-space:nowrap!important;word-break:normal!important;
+  overflow-wrap:normal!important;min-width:38px!important;
+}
+html body main.site .pn.ac #controls .ct{
+  display:block!important;flex:1 1 auto!important;width:auto!important;min-width:0!important;
+  white-space:normal!important;word-break:normal!important;overflow-wrap:break-word!important;
+  line-height:1.4!important;font-size:19px!important;
 }
 .site #JFWebsiteWidget-01a20385d44070008ebd3916d899f464f2b2{display:block;width:100%;min-height:520px;max-width:100%;overflow:visible}
 .site #JFWebsiteWidget-01a20385d44070008ebd3916d899f464f2b2 iframe{display:block;width:100%!important;max-width:100%!important;border:0!important}
-@media(max-width:820px){
- .site .pn.ac #controls .cx{grid-template-columns:minmax(0,1fr)!important;gap:5px!important}
- .site .pn.ac #controls .kk{flex-direction:row!important;flex-wrap:wrap!important}
- .site .pn.ac #controls .ct{padding-bottom:4px!important}
+@media(max-width:900px){
+ html body main.site .pn.ac{grid-template-columns:minmax(0,1fr)!important;gap:18px!important}
+ html body main.site .pn.ac #controls .cx{flex-direction:row!important;flex-wrap:nowrap!important}
+ html body main.site .pn.ac #controls .kk{flex-basis:145px!important;width:145px!important}
+}
+@media(max-width:560px){
+ html body main.site .pn.ac #controls .cx{flex-direction:column!important;align-items:stretch!important;gap:5px!important}
+ html body main.site .pn.ac #controls .kk{flex:0 0 auto!important;width:100%!important}
 }
 </style>
 </head><body>
