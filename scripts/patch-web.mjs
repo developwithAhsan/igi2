@@ -403,7 +403,9 @@ const gameBootAfter = [
   "  window.dispatchEvent(new Event('resize'));",
   "  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));",
   "  const canvasBounds = canvas.getBoundingClientRect();",
-  "  if (canvasBounds.width < 2 || canvasBounds.height < 2) throw new Error('The game display could not obtain a visible size. Rotate the device or reload the page, then try Play again.');",
+  "  const pixelRatio = Math.max(1, window.devicePixelRatio || 1);",
+  "  canvas.width = Math.max(1, Math.round(canvasBounds.width * pixelRatio));",
+  "  canvas.height = Math.max(1, Math.round(canvasBounds.height * pixelRatio));",
   "  canvas.focus({ preventScroll: true });",
   "  game.Boot(gameArgs);",
   "  window.dispatchEvent(new Event('resize'));"
@@ -419,7 +421,7 @@ program = program.replace(defaultRuntime, selectedRuntime);
 
 
 if (!platformJs.includes("  resizes.observe(canvas);")) throw new Error('The browser platform resize observer is missing.');
-platformJs = platformJs.replace("  resizes.observe(canvas);", "  // Report viewport rotations as game-window resizes too; some mobile browsers do not reliably\n  // deliver a ResizeObserver notification when only the visual viewport changes.\n  const reportCanvasSize = () => {\n    if (!canvas) return;\n    const [width, height] = drawable();\n    queue.push(`resize ${width} ${height}`);\n  };\n  window.addEventListener('resize', reportCanvasSize, { signal });\n  window.addEventListener('orientationchange', reportCanvasSize, { signal });\n  window.visualViewport?.addEventListener('resize', reportCanvasSize, { signal });\n  screen.orientation?.addEventListener?.('change', reportCanvasSize, { signal });\n  resizes.observe(canvas);\n  reportCanvasSize();");
+platformJs = platformJs.replace("  resizes.observe(canvas);", "  // Report viewport rotations as game-window resizes too; some mobile browsers do not reliably\n  // deliver a ResizeObserver notification when only the visual viewport changes.\n  let lastReportedSize = '';\n  const reportCanvasSize = () => {\n    if (!canvas || !canvas.isConnected) return;\n    const box = canvas.getBoundingClientRect();\n    if (box.width < 2 || box.height < 2) return;\n    const [width, height] = drawable();\n    const size = `${width} ${height}`;\n    if (size === lastReportedSize) return;\n    lastReportedSize = size;\n    queue.push(`resize ${size}`);\n  };\n  window.addEventListener('resize', reportCanvasSize, { signal });\n  window.addEventListener('orientationchange', reportCanvasSize, { signal });\n  window.visualViewport?.addEventListener('resize', reportCanvasSize, { signal });\n  screen.orientation?.addEventListener?.('change', reportCanvasSize, { signal });\n  resizes.observe(canvas);\n  reportCanvasSize();");
 await writeFile(platformPath, platformJs);
 await writeFile(gameFilesPath, gameFiles);
 await writeFile(programPath, program);
