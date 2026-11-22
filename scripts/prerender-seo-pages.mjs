@@ -1,9 +1,11 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ORIGIN = 'https://igi2.online';
-const source = await readFile(resolve('site/index.html'), 'utf8');
-const publishDir = resolve('publish');
+const source = await readFile(resolve(ROOT, 'site/index.html'), 'utf8');
+const publishDir = resolve(ROOT, 'publish');
 
 function capture(pattern, label) {
   const match = source.match(pattern);
