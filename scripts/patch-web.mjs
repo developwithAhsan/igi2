@@ -301,9 +301,10 @@ gameFiles = gameFiles.replace(sourceListMarker, sourceListReplacement);
 // Download the full hosted first-game data set before launching, with one accurate combined progress bar.
 const prefetchGuard = [
   "      const connection = navigator.connection;",
-  "      // Complete all hosted game data before boot after Play is pressed."
+  "      if (connection?.saveData || /(^|-)(2g|3g)$/.test(connection?.effectiveType ?? '')) return;"
 ].join('\n');
 if (!gameFiles.includes(prefetchGuard)) throw new Error('Could not enable full hosted game download before launch.');
+gameFiles = gameFiles.replace("      if (connection?.saveData || /(^|-)(2g|3g)$/.test(connection?.effectiveType ?? '')) return;", "      // Finish all mission bundles before launching after Play is pressed.");
 const oldPrefetchNames = "const names = Object.keys(index.bundles).filter(name => name !== 'base').sort((a, b) => order(a) - order(b));";
 const newPrefetchNames = "const names = Object.keys(index.bundles).sort((a, b) => a === 'base' ? -1 : b === 'base' ? 1 : order(a) - order(b));";
 if (!gameFiles.includes(oldPrefetchNames)) throw new Error('The hosted bundle list no longer matches the expected engine source.');
