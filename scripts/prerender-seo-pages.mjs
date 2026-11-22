@@ -152,7 +152,7 @@ function structuredData(page, canonical) {
     };
   }
   const breadcrumbItems = [{ '@type': 'ListItem', position: 1, name: 'Home', item: ORIGIN + '/' }];
-  if (page.isArticle || page.isBlogIndex) {
+  if (page.isArticle) {
     breadcrumbItems.push({ '@type': 'ListItem', position: 2, name: 'Blog', item: ORIGIN + '/blog/' });
   }
   breadcrumbItems.push({
