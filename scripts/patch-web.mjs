@@ -174,8 +174,8 @@ js = js.replace(
   "function showLanding() {\n  canvas.hidden = true;\n  landing.hidden = false;\n  $('game-frame').classList.remove('is-running');\n  $('game-prompt').hidden = false;\n  $('engine-overlay').hidden = true;\n  window.dispatchEvent(new Event('igi2-game-returned'));\n}"
 );
 js = js.replace(
-  '  landing.hidden = true;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  $('engine-overlay').hidden = false;\n  canvas.focus();\n  window.dispatchEvent(new Event(\'igi2-game-started\'));\n  game.Boot(args);',
-  "  landing.hidden = true;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  $('engine-overlay').hidden = false;\n  canvas.focus();\n  game.Boot(args);"
+  '  landing.hidden = true;\n  canvas.hidden = false;\n  canvas.focus();\n  game.Boot(args);',
+  "  landing.hidden = true;\n  canvas.hidden = false;\n  $('game-frame').classList.add('is-running');\n  $('game-prompt').hidden = true;\n  $('engine-overlay').hidden = false;\n  canvas.focus();\n  window.dispatchEvent(new Event(\"igi2-game-started\"));\n  game.Boot(args);"
 );
 
 // Remove the upstream installer promotion and Discord/GitHub community widgets.
