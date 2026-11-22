@@ -6,6 +6,7 @@ const indexPath = resolve(root, 'index.html');
 const mainPath = resolve(root, 'main.js');
 const gameFilesPath = resolve(root, 'game-files.js');
 const programPath = resolve('engine/OpenIGI/apps/OpenIGI.Web/Program.cs');
+const platformPath = resolve('engine/OpenIGI/src/Platform/OpenIGI.Platform.Web/platform.js');
 let siteIndex = await readFile(resolve('site/index.html'), 'utf8');
 if (!siteIndex.includes('id="play-status"')) {
   const playButtonEnd = siteIndex.indexOf('</button>', siteIndex.indexOf('id="play"'));
@@ -104,11 +105,55 @@ const playerStyles = `
 #player-shell:fullscreen .frame-actions{display:flex!important}
 #player-shell:fullscreen .settings-panel{display:block}
 @media(max-width:600px){#engine-overlay .frame-actions{right:10px;bottom:10px;gap:7px}#engine-overlay .tool-btn{min-width:0;min-height:39px;padding:8px 10px;font-size:12px}#engine-overlay .settings-panel{right:10px;bottom:58px;width:calc(100% - 20px)}#engine-overlay .igi2-rotate-hint{width:calc(100% - 34px);justify-content:center}}
+/* Reflow the entire site after a phone or tablet is rotated to landscape. */
+@media (orientation:landscape) and (max-height:600px) {
+  :root{--W:min(100vw,calc(100dvh * 1328 / 1184));--H:100dvh;--u:calc(var(--H) / 1184);--crop:0px;--igi2-width:var(--W);--igi2-height:var(--H);--igi2-unit:var(--u);--igi2-crop:0px}
+  .wrap{height:100dvh}
+  .stage{width:var(--W);height:var(--H);margin:0 auto!important}
+  .sec{padding-top:clamp(16px,3vh,28px)}
+  .pn{padding:clamp(12px,2vw,22px)}
+  .site p{font-size:clamp(14px,2.25vh,18px);line-height:1.42}
+  .fi{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(14px,2.5vw,28px)}
+  .bg2{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+  #engine-overlay{height:100dvh;height:100svh;overflow:hidden}
+  #engine-toolbar{height:34px;min-height:34px;padding:0 10px}
+  #engine-overlay #player-shell .igi2-wrap{width:100vw!important;height:calc(100dvh - 34px)!important;display:flex;align-items:stretch;justify-content:stretch}
+  #engine-overlay #player-shell .igi2-stage{width:100vw!important;height:calc(100dvh - 34px)!important;margin:0!important}
+  #engine-overlay #player-shell #stage{position:absolute;inset:0;width:100%;height:100%}
+  #engine-overlay #player-shell #view{position:absolute;inset:0;width:100%;height:100%}
+  #engine-overlay #player-shell .frame-actions{right:10px;bottom:8px}
+  #engine-overlay #player-shell .tool-btn{min-height:35px;padding:6px 10px}
+  #igi2-download-screen{min-height:100dvh;padding:12px 20px}
+  #igi2-download-screen .igi2-download-card{width:min(720px,88vw)}
+  #igi2-download-screen .igi2-download-brand{margin-bottom:clamp(10px,2.5vh,24px)}
+  #igi2-download-screen .igi2-download-heading{margin-bottom:12px}
+  #igi2-download-screen .igi2-download-track{height:clamp(18px,4vh,26px)}
+  #igi2-download-screen .igi2-download-numbers{margin-top:8px}
+  #igi2-download-screen .igi2-download-stage{margin-top:8px}
+}
+@media (orientation:landscape) and (max-height:600px) and (min-width:650px) {
+  .ac{grid-template-columns:minmax(0,.9fr) 2px minmax(0,1.3fr)}
+  .vl{width:2px;height:auto}
+  .cx{grid-template-columns:minmax(100px,38%) minmax(0,1fr);gap:6px 10px}
+  .k{min-width:32px;height:32px;font-size:16px}
+  .ct{font-size:clamp(14px,2.2vh,17px)}
+}
+@media (orientation:landscape) and (max-height:420px) {
+  #engine-toolbar{height:30px;min-height:30px;font-size:9px}
+  #engine-overlay #player-shell .igi2-wrap{height:calc(100dvh - 30px)!important}
+  #engine-overlay #player-shell .igi2-stage{height:calc(100dvh - 30px)!important}
+  #engine-overlay #player-shell .tool-btn{min-height:30px;padding:5px 8px;font-size:11px}
+  #igi2-download-screen .igi2-download-brand{font-size:22px;margin-bottom:8px}
+  #igi2-download-screen .igi2-download-brand span{font-size:9px;margin-top:4px}
+  #igi2-download-screen .igi2-download-heading{font-size:17px;margin-bottom:8px}
+  #igi2-download-screen .igi2-download-stage{margin-top:5px;font-size:10px}
+}
 `;
 siteIndex = siteIndex.replace('</style><style id="igi2-engine-bridge">', playerStyles + '</style><style id="igi2-engine-bridge">');
 const favicon = await readFile(resolve('site/favicon.svg'), 'utf8');
 let gameFiles = await readFile(gameFilesPath, 'utf8');
 let program = await readFile(programPath, 'utf8');
+let platformJs = await readFile(platformPath, 'utf8');
 
 let js = await readFile(mainPath, 'utf8');
 
@@ -350,6 +395,22 @@ replaceGameFiles("  const prefix = await locateInList(base, all);\n  const files
 if (!gameFiles.includes("^igi2?\\.exe$/i") || !gameFiles.includes('title: found.title') || !gameFiles.includes('title: location.title')) throw new Error('I.G.I. 2 game-folder wiring is incomplete.');
 js = js.replace("  game.Boot(args);", "  const gameArgs = source.title ? [...args, '-title', source.title] : args;\n  game.Boot(gameArgs);");
 if (!js.includes("game.Boot(gameArgs)")) throw new Error('Could not route the selected game title to the browser runtime.');
+// The player canvas is inside the initially hidden overlay. Wait for two layout frames after showing it
+// so WebGameWindow and the WebGPU surface are created with real, non-zero dimensions.
+const gameBootBefore = "  const gameArgs = source.title ? [...args, '-title', source.title] : args;\n  game.Boot(gameArgs);";
+const gameBootAfter = [
+  "  const gameArgs = source.title ? [...args, '-title', source.title] : args;",
+  "  window.dispatchEvent(new Event('resize'));",
+  "  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));",
+  "  const canvasBounds = canvas.getBoundingClientRect();",
+  "  if (canvasBounds.width < 2 || canvasBounds.height < 2) throw new Error('The game display could not obtain a visible size. Rotate the device or reload the page, then try Play again.');",
+  "  canvas.focus({ preventScroll: true });",
+  "  game.Boot(gameArgs);",
+  "  window.dispatchEvent(new Event('resize'));"
+].join('\n');
+if (!js.includes(gameBootBefore)) throw new Error('The hidden-canvas startup block changed unexpectedly.');
+js = js.replace(gameBootBefore, gameBootAfter);
+
 const defaultRuntime = "        IGameTitleRuntime runtime = TitleCatalog.Default;";
 const selectedRuntime = "        IGameTitleRuntime runtime = TitleCatalog.Default;\n        if (options.Title is { Length: > 0 } titleId)\n        {\n            if (!TitleCatalog.TryResolve(titleId, out IGameTitleRuntime? selectedRuntime))\n            {\n                throw new ArgumentException($\"Unknown game title '{titleId}'. Known titles: {TitleCatalog.KnownTitleIds}\");\n            }\n            runtime = selectedRuntime;\n        }";
 if (!program.includes(defaultRuntime)) throw new Error('Could not find the browser runtime default selection in Program.cs.');
@@ -357,6 +418,9 @@ program = program.replace(defaultRuntime, selectedRuntime);
 
 
 
+if (!platformJs.includes("  resizes.observe(canvas);")) throw new Error('The browser platform resize observer is missing.');
+platformJs = platformJs.replace("  resizes.observe(canvas);", "  // Report viewport rotations as game-window resizes too; some mobile browsers do not reliably\n  // deliver a ResizeObserver notification when only the visual viewport changes.\n  const reportCanvasSize = () => {\n    if (!canvas) return;\n    const [width, height] = drawable();\n    queue.push(`resize ${width} ${height}`);\n  };\n  window.addEventListener('resize', reportCanvasSize, { signal });\n  window.addEventListener('orientationchange', reportCanvasSize, { signal });\n  window.visualViewport?.addEventListener('resize', reportCanvasSize, { signal });\n  screen.orientation?.addEventListener?.('change', reportCanvasSize, { signal });\n  resizes.observe(canvas);\n  reportCanvasSize();");
+await writeFile(platformPath, platformJs);
 await writeFile(gameFilesPath, gameFiles);
 await writeFile(programPath, program);
 await writeFile(indexPath, siteIndex);
