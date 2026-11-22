@@ -87,6 +87,9 @@ cp -a "$ROOT/site/." "$ROOT/publish/"
 # Restore that patched homepage after copying the source site, which would otherwise overwrite it.
 cp "$WEB_ROOT/index.html" "$ROOT/publish/index.html"
 
+# Rasterize the uploaded SVG artwork into a crawler-friendly 1200x630 JPEG OG image.
+node "$ROOT/scripts/generate-og-image.mjs"
+
 # Generate static HTML for every information page and blog article so search crawlers
 # receive page-specific content and metadata without requiring client-side JavaScript.
 node "$ROOT/scripts/prerender-seo-pages.mjs"

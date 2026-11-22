@@ -116,7 +116,7 @@ function structuredData(page, canonical) {
       description: page.description,
       inLanguage: 'en',
       mainEntityOfPage: canonical,
-      image: ORIGIN + '/assets/og-image.svg',
+      image: ORIGIN + '/assets/og-image-v2.jpg',
       datePublished: '2026-11-21',
       dateModified: '2026-11-22',
       keywords: page.keywords,
@@ -209,15 +209,15 @@ for (const page of pages) {
     '<meta property="og:title" content="' + title + '">\n' +
     '<meta property="og:description" content="' + description + '">\n' +
     '<meta property="og:url" content="' + canonical + '">\n' +
-    '<meta property="og:image" content="' + ORIGIN + '/assets/og-image.svg">\n' +
+    '<meta property="og:image" content="' + ORIGIN + '/assets/og-image-v2.jpg">\n' +
     '<meta property="og:image:width" content="1200">\n' +
     '<meta property="og:image:height" content="630">\n' +
     '<meta property="og:image:alt" content="' + escapeHtml(ogAlt) + '">\n' +
-    '<meta property="og:image:type" content="image/svg+xml">\n' +
+    '<meta property="og:image:type" content="image/jpeg">\n' +
     '<meta name="twitter:card" content="summary_large_image">\n' +
     '<meta name="twitter:title" content="' + title + '">\n' +
     '<meta name="twitter:description" content="' + description + '">\n' +
-    '<meta name="twitter:image" content="' + ORIGIN + '/assets/og-image.svg">\n' +
+    '<meta name="twitter:image" content="' + ORIGIN + '/assets/og-image-v2.jpg">\n' +
     '<meta name="twitter:image:alt" content="' + escapeHtml(ogAlt) + '">\n' +
     styleMarkup + '\n' +
     '<script type="application/ld+json">' + schema + '</script>\n' +
